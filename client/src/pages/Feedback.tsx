@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, lx, trx } from '../i18n';
 import { Spinner, timeAgo } from '../components';
 import { FEEDBACK_EMAIL, ISSUES_URL, isDemo } from '../config';
 import type { FeedbackCategory, FeedbackEntry } from '../types';
@@ -36,13 +36,13 @@ function toCsv(rows: FeedbackEntry[]) {
 
 function AdminItem({ f, reload }: { f: FeedbackEntry; reload: () => void }) {
   const { locale } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [resp, setResp] = useState(f.response || '');
   return (
     <div className="subcard">
       <div className="flex gap-sm wrap items-center">
         <select value={f.status} style={{ width: 'auto' }} onChange={async (e) => { await api.patch(`/feedback/${f.id}`, { status: e.target.value }); reload(); }}>
-          {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v[locale]}</option>)}
+          {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{lx(v)}</option>)}
         </select>
         <input value={resp} onChange={(e) => setResp(e.target.value)} placeholder={tx('Antwort an die Person …', 'Reply to the person …')} style={{ flex: 1, minWidth: 180 }} />
         <button className="btn-outline btn-sm" disabled={!resp.trim() || resp === f.response} onClick={async () => { await api.patch(`/feedback/${f.id}`, { response: resp }); reload(); }}>{tx('Antworten', 'Reply')}</button>
@@ -54,7 +54,7 @@ function AdminItem({ f, reload }: { f: FeedbackEntry; reload: () => void }) {
 export default function Feedback() {
   const { user } = useAuth();
   const { locale } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [params] = useSearchParams();
   const from = params.get('from') || '';
   const [list, setList] = useState<FeedbackEntry[] | null>(null);
@@ -103,7 +103,7 @@ export default function Feedback() {
             <div className="flex wrap gap-sm">
               {(Object.keys(CATS) as FeedbackCategory[]).map((c) => (
                 <button type="button" key={c} className={f.category === c ? 'btn-gold btn-sm' : 'btn-outline btn-sm'} onClick={() => setF({ ...f, category: c })}>
-                  {CATS[c].ico} {CATS[c][locale]}
+                  {CATS[c].ico} {lx(CATS[c])}
                 </button>
               ))}
             </div>
@@ -112,7 +112,7 @@ export default function Feedback() {
             <div className="field"><label>{tx('Bereich', 'Area')}</label>
               <select value={f.area} onChange={(e) => setF({ ...f, area: e.target.value })}>
                 <option value="">–</option>
-                {AREAS.map(([de, en]) => <option key={de} value={de}>{locale === 'de' ? de : en}</option>)}
+                {AREAS.map(([de, en]) => <option key={de} value={de}>{trx(de, en)}</option>)}
               </select></div>
             <div className="field"><label>{tx('Gesamteindruck (optional)', 'Overall impression (optional)')}</label>
               <div className="flex gap-sm" role="radiogroup">
@@ -156,7 +156,7 @@ export default function Feedback() {
           <div className="tabs right" style={{ marginBottom: 0 }}>
             {(['all', 'new', 'in_progress', 'done'] as const).map((s) => (
               <button key={s} className={filter === s ? 'active' : ''} onClick={() => setFilter(s)}>
-                {s === 'all' ? tx('Alle', 'All') : STATUS[s][locale]} ({s === 'all' ? list.length : list.filter((x) => x.status === s).length})
+                {s === 'all' ? tx('Alle', 'All') : lx(STATUS[s])} ({s === 'all' ? list.length : list.filter((x) => x.status === s).length})
               </button>
             ))}
           </div>
@@ -166,11 +166,11 @@ export default function Feedback() {
       {shown.map((x) => (
         <div key={x.id} className="card mt-sm">
           <div className="flex items-center gap-sm wrap">
-            <span className="badge">{CATS[x.category].ico} {CATS[x.category][locale]}</span>
+            <span className="badge">{CATS[x.category].ico} {lx(CATS[x.category])}</span>
             {x.area && <span className="badge badge-domain">{x.area}</span>}
             {x.rating && <span className="badge">{'★'.repeat(x.rating)}</span>}
             <small className="muted">{isAdmin && x.user_name ? `${x.user_name} · ` : ''}{timeAgo(x.created_at, locale)}{x.page ? ` · ${x.page}` : ''}</small>
-            <span className={`badge ${STATUS[x.status].cls} right`}>{STATUS[x.status][locale]}</span>
+            <span className={`badge ${STATUS[x.status].cls} right`}>{lx(STATUS[x.status])}</span>
           </div>
           <p style={{ whiteSpace: 'pre-wrap', margin: '.5rem 0 0' }}>{x.body}</p>
           {x.response && !isAdmin && <div className="notice mt-sm">💬 <b>{tx('Antwort des Teams', 'Reply from the team')}:</b> {x.response}</div>}

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, lx, trx } from '../i18n';
 import { Avatar, Spinner, TagPill, timeAgo } from '../components';
 import { Stepper, StepBadge } from './Journey';
 import {
@@ -30,7 +30,7 @@ function TagPicker({ tags, selected, onChange }: { tags: Tag[]; selected: number
     <div>
       {cats.map((c) => (
         <div key={c.key} className="flex wrap gap-sm items-center" style={{ margin: '.3rem 0' }}>
-          <small style={{ width: 110 }}>{locale === 'de' ? c.de : c.en}</small>
+          <small style={{ width: 110 }}>{lx(c)}</small>
           {tags.filter((t) => t.category === c.key).map((t) => (
             <button type="button" key={t.id} className={selected.includes(t.id) ? 'btn-sm btn-gold' : 'btn-sm btn-outline'}
               onClick={() => onChange(selected.includes(t.id) ? selected.filter((x) => x !== t.id) : [...selected, t.id])}>
@@ -103,13 +103,13 @@ function Prioritization({ n, canEdit, act, tx }: { n: Need; canEdit: boolean; ac
     <div className="ratings mt-sm">
       {RATING_CRITERIA.map((c) => (
         <div key={c.key}>
-          <small>{c.label[locale]}</small>
+          <small>{lx(c.label)}</small>
           {canEdit ? (
             <select value={n[c.key] ?? ''} onChange={(e) => act('patch', `/journey/needs/${n.id}`, { [c.key]: e.target.value || null })}>
               <option value="">–</option>
-              {[1, 2, 3].map((v) => <option key={v} value={v}>{RATING_LABEL[v][locale]}</option>)}
+              {[1, 2, 3].map((v) => <option key={v} value={v}>{lx(RATING_LABEL[v])}</option>)}
             </select>
-          ) : <div><b>{n[c.key] ? RATING_LABEL[n[c.key]!][locale] : '–'}</b></div>}
+          ) : <div><b>{n[c.key] ? lx(RATING_LABEL[n[c.key]!]) : '–'}</b></div>}
         </div>
       ))}
       <div>
@@ -141,9 +141,9 @@ function PlanBlock({ n, isAdmin, act, tx }: { n: Need; isAdmin: boolean; act: Ac
               <label className="flex items-center gap-sm" style={{ margin: 0, cursor: 'pointer' }}>
                 <input type="checkbox" style={{ width: 'auto' }} checked={has(f.key)}
                   onChange={() => setItems(has(f.key) ? items.filter((i) => i.format !== f.key) : [...items, { format: f.key, note: '' }])} />
-                {f.label[locale]}
+                {lx(f.label)}
               </label>
-              <small>{f.hint[locale]}</small>
+              <small>{lx(f.hint)}</small>
               {has(f.key) && (
                 <input placeholder={tx('Konkreter Inhalt', 'Concrete content')} value={items.find((i) => i.format === f.key)!.note}
                   onChange={(e) => setItems(items.map((i) => (i.format === f.key ? { ...i, note: e.target.value } : i)))} />
@@ -166,7 +166,7 @@ function PlanBlock({ n, isAdmin, act, tx }: { n: Need; isAdmin: boolean; act: Ac
         <div className="flex wrap gap-sm">
           {n.plan.map((p) => (
             <span key={p.id} className={`badge fmt-${FORMATS.find((f) => f.key === p.format)!.mechanism}`} title={p.note || ''}>
-              {formatLabel(p.format)[locale]}{p.note ? ` – ${p.note}` : ''}
+              {lx(formatLabel(p.format))}{p.note ? ` – ${p.note}` : ''}
             </span>
           ))}
         </div>
@@ -198,15 +198,15 @@ function BriefBlock({ n, isAdmin, act, tx, tags }: { n: Need; isAdmin: boolean; 
         <b>Matching Brief</b>
         <div className="flex wrap gap-sm mt-sm">
           {(Object.keys(ROLE_LABEL) as SupportRole[]).map((r) => (
-            <button key={r} type="button" title={ROLE_HINT[r][locale]} className={f.main_role === r ? 'btn-sm btn-gold' : 'btn-sm btn-outline'} onClick={() => setF({ ...f, main_role: r })}>
-              {ROLE_LABEL[r][locale]}
+            <button key={r} type="button" title={lx(ROLE_HINT[r])} className={f.main_role === r ? 'btn-sm btn-gold' : 'btn-sm btn-outline'} onClick={() => setF({ ...f, main_role: r })}>
+              {lx(ROLE_LABEL[r])}
             </button>
           ))}
         </div>
-        <small className="muted">{ROLE_HINT[f.main_role][locale]}</small>
+        <small className="muted">{lx(ROLE_HINT[f.main_role])}</small>
         <div className="row mt-sm">
           {fields.map((x) => (
-            <div className="field" key={x.k}><label>{locale === 'de' ? x.de : x.en}</label>
+            <div className="field" key={x.k}><label>{lx(x)}</label>
               <input value={f[x.k]} onChange={(e) => setF({ ...f, [x.k]: e.target.value })} /></div>
           ))}
           <div className="field"><label>{tx('Sprache', 'Language')}</label>
@@ -230,7 +230,7 @@ function BriefBlock({ n, isAdmin, act, tx, tags }: { n: Need; isAdmin: boolean; 
       {!b ? <small className="muted">{tx('Noch kein Matching Brief', 'No matching brief yet')}</small> : (
         <div className="brief">
           <p style={{ margin: '.2rem 0' }}>
-            {tx('Gesucht wird', 'We are looking for')} <b>{ROLE_LABEL[b.main_role][locale]}</b>
+            {tx('Gesucht wird', 'We are looking for')} <b>{lx(ROLE_LABEL[b.main_role])}</b>
             {b.experience && <> {tx('mit Erfahrung in', 'with experience in')} <b>{b.experience}</b></>}
             {b.context_ref && <>, {tx('Kenntnis von', 'knowledge of')} <b>{b.context_ref}</b></>}
             {b.network_access && <>, {tx('Zugang zu', 'access to')} <b>{b.network_access}</b></>}.
@@ -275,7 +275,7 @@ function MatchBlock({ n, d, act, tx, userId, reload }: { n: Need; d: Detail; act
           <div key={m.id} className="list-item" style={{ padding: '.5rem 0' }}>
             <Avatar name={m.supporter_name} seed={m.supporter_avatar} size="sm" />
             <div className="grow">
-              <b>{m.supporter_name}</b> <span className="badge badge-gold">{ROLE_LABEL[m.role][locale]}</span>
+              <b>{m.supporter_name}</b> <span className="badge badge-gold">{lx(ROLE_LABEL[m.role])}</span>
               <div><small>{m.supporter_headline}{m.score != null ? ` · Score ${Math.round(m.score)}` : ''}</small></div>
               <div className="flex wrap gap-sm">
                 <span className={`badge ${m.supporter_ok ? 'badge-resolved' : ''}`}>{m.supporter_ok ? '✓' : '…'} {tx('Unterstützer:in', 'Supporter')}</span>
@@ -318,7 +318,7 @@ function MatchBlock({ n, d, act, tx, userId, reload }: { n: Need; d: Detail; act
                 </div>
                 <div className="score-ring" style={{ ['--p' as any]: c.score }}><span>{Math.round(c.score)}</span></div>
               </div>
-              <div className="flex wrap gap-sm mt-sm">{c.matchedTags.map((t, i) => <span key={i} className="badge badge-domain">{locale === 'de' ? t.de : t.en}</span>)}</div>
+              <div className="flex wrap gap-sm mt-sm">{c.matchedTags.map((t, i) => <span key={i} className="badge badge-domain">{lx(t)}</span>)}</div>
               <div className="grid grid-5 mt-sm">
                 {([
                   ['expertise', tx('Fachlich', 'Expertise')], ['context', tx('Kontext', 'Context')], ['network', tx('Netzwerk', 'Network')],
@@ -335,7 +335,7 @@ function MatchBlock({ n, d, act, tx, userId, reload }: { n: Need; d: Detail; act
                   </span>
                 ) : (
                   <button className="btn-gold btn-sm" onClick={async () => { await act('post', `/journey/needs/${n.id}/invite`, { supporterId: c.supporter.id, role: c.role }); await loadCands(); }}>
-                    {tx('Als', 'Invite as')} {ROLE_LABEL[c.role][locale]} {tx('einladen', '')}
+                    {tx('Als', 'Invite as')} {lx(ROLE_LABEL[c.role])} {tx('einladen', '')}
                   </button>
                 )}
               </div>
@@ -396,8 +396,8 @@ function ReviewBlock({ n, canEdit, act, tx }: { n: Need; canEdit: boolean; act: 
       {n.reviews.length === 0 && !open && <small className="muted">{tx('Noch kein Review', 'No review yet')}</small>}
       {n.reviews.map((r) => (
         <div key={r.id} style={{ margin: '.3rem 0' }}>
-          <span className={`badge ${r.progress === 'achieved' ? 'badge-resolved' : r.progress === 'partial' ? 'badge-matched' : 'badge-open'}`}>{PROGRESS_LABEL[r.progress][locale]}</span>{' '}
-          {r.outcome} <small className="muted">· {NEXT_STEP_LABEL[r.next_step][locale]} · {timeAgo(r.created_at, locale)}</small>
+          <span className={`badge ${r.progress === 'achieved' ? 'badge-resolved' : r.progress === 'partial' ? 'badge-matched' : 'badge-open'}`}>{lx(PROGRESS_LABEL[r.progress])}</span>{' '}
+          {r.outcome} <small className="muted">· {lx(NEXT_STEP_LABEL[r.next_step])} · {timeAgo(r.created_at, locale)}</small>
         </div>
       ))}
       {open && (
@@ -406,11 +406,11 @@ function ReviewBlock({ n, canEdit, act, tx }: { n: Need; canEdit: boolean; act: 
           <div className="row mt-sm">
             <div className="field"><label>{tx('Zielerreichung', 'Goal attainment')}</label>
               <select value={f.progress} onChange={(e) => setF({ ...f, progress: e.target.value })}>
-                {Object.entries(PROGRESS_LABEL).map(([k, v]) => <option key={k} value={k}>{v[locale]}</option>)}
+                {Object.entries(PROGRESS_LABEL).map(([k, v]) => <option key={k} value={k}>{lx(v)}</option>)}
               </select></div>
             <div className="field"><label>{tx('Nächster Schritt', 'Next step')}</label>
               <select value={f.next_step} onChange={(e) => setF({ ...f, next_step: e.target.value })}>
-                {Object.entries(NEXT_STEP_LABEL).map(([k, v]) => <option key={k} value={k}>{v[locale]}</option>)}
+                {Object.entries(NEXT_STEP_LABEL).map(([k, v]) => <option key={k} value={k}>{lx(v)}</option>)}
               </select></div>
           </div>
           <div className="field"><label>{tx('Beobachtetes Ergebnis (Outcome, z.B. Partnerschaft vereinbart, Umsatz, Jobs)', 'Observed result (outcome, e.g. partnership agreed, revenue, jobs)')}</label>
@@ -434,7 +434,7 @@ function CloseForm({ act, caseId, tx, onCancel }: { act: Act; caseId: number; tx
     <form className="subcard" onSubmit={async (e) => { e.preventDefault(); await act('post', `/journey/cases/${caseId}/close`, { reason, note }); }}>
       <div className="field"><label>{tx('Abschlussgrund', 'Reason')}</label>
         <select value={reason} onChange={(e) => setReason(e.target.value)}>
-          {['goal_achieved', 'eem_request', 'no_further_need'].map((r) => <option key={r} value={r}>{CLOSE_REASON_LABEL[r][locale]}</option>)}
+          {['goal_achieved', 'eem_request', 'no_further_need'].map((r) => <option key={r} value={r}>{lx(CLOSE_REASON_LABEL[r])}</option>)}
         </select></div>
       <div className="field"><label>{tx('Abschlussdokumentation (erreichte Ziele, Ergebnisse, Empfehlung)', 'Closing documentation (goals achieved, results, recommendation)')}</label>
         <textarea value={note} onChange={(e) => setNote(e.target.value)} required /></div>
@@ -450,7 +450,7 @@ export default function CaseDetail() {
   const { id } = useParams();
   const { user } = useAuth();
   const { locale } = useI18n();
-  const tx: Tx = (de, en) => (locale === 'de' ? de : en);
+  const tx: Tx = trx;
   const [d, setD] = useState<Detail | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [error, setError] = useState<{ msg: string; missing?: { de: string; en: string }[] } | null>(null);
@@ -510,7 +510,7 @@ export default function CaseDetail() {
           <div>
             <h1 style={{ margin: 0, fontSize: '1.4rem' }}>{d.eem.name}</h1>
             <small>{d.eem.headline} · {d.eem.country}
-              {d.profile?.case_type ? ` · ${CASE_TYPE_LABEL[d.profile.case_type][locale]}` : ''}
+              {d.profile?.case_type ? ` · ${lx(CASE_TYPE_LABEL[d.profile.case_type])}` : ''}
               {c.cycle > 1 ? ` · ${tx('Zyklus', 'Cycle')} ${c.cycle}` : ''}</small>
             {d.coordinator && <div><small>{tx('Koordination', 'Coordination')}: {d.coordinator.name}</small></div>}
           </div>
@@ -521,17 +521,17 @@ export default function CaseDetail() {
         {!closed && d.access !== 'invited' && (
           <div className={`handover ${d.handover.canAdvance ? 'ok' : ''}`}>
             <div className="flex items-center wrap gap-sm">
-              <b>{tx('Übergabe', 'Handover')}: {STEP_LABEL[c.step][locale]}{d.handover.next ? ` → ${STEP_LABEL[d.handover.next][locale]}` : ''}</b>
-              <small className="muted">· {tx('Output', 'Output')}: {STEP_OUTPUT[c.step][locale]}</small>
+              <b>{tx('Übergabe', 'Handover')}: {lx(STEP_LABEL[c.step])}{d.handover.next ? ` → ${lx(STEP_LABEL[d.handover.next])}` : ''}</b>
+              <small className="muted">· {tx('Output', 'Output')}: {lx(STEP_OUTPUT[c.step])}</small>
             </div>
             {d.handover.missing.length > 0 ? (
-              <ul className="missing">{d.handover.missing.map((m) => <li key={m.code}>{locale === 'de' ? m.de : m.en}</li>)}</ul>
+              <ul className="missing">{d.handover.missing.map((m) => <li key={m.code}>{lx(m)}</li>)}</ul>
             ) : <small>✓ {tx('Alle Outputs liegen vor.', 'All outputs are available.')}</small>}
             {isAdmin && (
               <div className="flex wrap gap-sm mt-sm">
                 {d.handover.next && (
                   <button className="btn-gold btn-sm" disabled={!d.handover.canAdvance} onClick={() => safe(act('post', `/journey/cases/${c.id}/advance`))}>
-                    {tx('Weiter zu', 'Proceed to')} {STEP_LABEL[d.handover.next][locale]} →
+                    {tx('Weiter zu', 'Proceed to')} {lx(STEP_LABEL[d.handover.next])} →
                   </button>
                 )}
                 {c.step === 'reassessment' && (
@@ -547,14 +547,14 @@ export default function CaseDetail() {
         )}
         {closed && (
           <div className="handover ok">
-            <b>{c.closed_reason ? CLOSE_REASON_LABEL[c.closed_reason][locale] : tx('Abgeschlossen', 'Closed')}</b>
+            <b>{c.closed_reason ? lx(CLOSE_REASON_LABEL[c.closed_reason]) : tx('Abgeschlossen', 'Closed')}</b>
             {c.closing_note && <p style={{ margin: '.3rem 0 0' }}>{c.closing_note}</p>}
           </div>
         )}
         {error && (
           <div className="error">
             {error.msg}
-            {error.missing && <ul className="missing">{error.missing.map((m, i) => <li key={i}>{locale === 'de' ? m.de : m.en}</li>)}</ul>}
+            {error.missing && <ul className="missing">{error.missing.map((m, i) => <li key={i}>{lx(m)}</li>)}</ul>}
           </div>
         )}
       </div>
@@ -569,7 +569,7 @@ export default function CaseDetail() {
       {/* 1 Aufnahme */}
       {d.access !== 'invited' && (
         <div className="card mt">
-          <h3>1 · {STEP_LABEL.intake[locale]}</h3>
+          <h3>1 · {lx(STEP_LABEL.intake)}</h3>
           <p style={{ margin: 0 }}><small className="muted">{tx('Anliegen', 'Concern')}:</small> {c.motivation}</p>
           {c.expectations && <p style={{ margin: '.3rem 0 0' }}><small className="muted">{tx('Geklärte Erwartungen', 'Clarified expectations')}:</small> {c.expectations}</p>}
           {isAdmin && c.step === 'intake' && (
@@ -589,7 +589,7 @@ export default function CaseDetail() {
       {d.access !== 'invited' && si >= 1 && (
         <div className="card mt">
           <div className="flex items-center gap-sm">
-            <h3 style={{ margin: 0 }}>2 · {STEP_LABEL.assessment[locale]} – {tx('EEM-Profil', 'EEM profile')}</h3>
+            <h3 style={{ margin: 0 }}>2 · {lx(STEP_LABEL.assessment)} – {tx('EEM-Profil', 'EEM profile')}</h3>
             <span className="right">
               {d.profile?.validated_at ? <span className="badge badge-resolved">✓ {tx('validiert', 'validated')}</span> : <span className="badge badge-open">{tx('nicht validiert', 'not validated')}</span>}
             </span>
@@ -598,9 +598,9 @@ export default function CaseDetail() {
             <div className="grid grid-2 mt-sm">
               {QUESTIONNAIRES.map((qq) => (
                 <div key={qq.area} className="subcard" style={{ margin: 0 }}>
-                  <b>{qq.title[locale].split(' – ')[0]}</b>
+                  <b>{lx(qq.title).split(' – ')[0]}</b>
                   {qq.questions.map((q) => (
-                    <div key={q.key}><small className="muted">{q.label[locale]}:</small> <small>{answerLabel(q, d.profile![qq.area][q.key], locale)}</small></div>
+                    <div key={q.key}><small className="muted">{lx(q.label)}:</small> <small>{answerLabel(q, d.profile![qq.area][q.key], locale)}</small></div>
                   ))}
                 </div>
               ))}
@@ -688,7 +688,7 @@ export default function CaseDetail() {
               <li key={e.id} className={`ev-${e.type}`}>
                 <small className="muted">{timeAgo(e.created_at, locale)} · {e.user_name || 'stars'}</small>
                 <div>
-                  {e.type === 'step' && e.step && <b>{STEP_LABEL[e.step][locale]}{e.body ? ': ' : ''}</b>}
+                  {e.type === 'step' && e.step && <b>{lx(STEP_LABEL[e.step])}{e.body ? ': ' : ''}</b>}
                   {e.type === 'progress' && <span className="badge badge-resolved">{tx('Fortschritt', 'Progress')}</span>}{' '}
                   {e.body}
                 </div>

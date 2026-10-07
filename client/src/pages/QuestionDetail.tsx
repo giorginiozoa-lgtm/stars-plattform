@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, trx, lx } from '../i18n';
 import { Avatar, Spinner, TagPill, timeAgo } from '../components';
 import type { Question, Match, Community } from '../types';
 import { CommunityCard } from './Communities';
@@ -59,10 +59,8 @@ export default function QuestionDetail() {
 
       {communities.length > 0 && (
         <div className="mt">
-          <h2 style={{ margin: '0 0 .3rem' }}>{locale === 'de' ? 'Community first: hier wird dein Thema schon diskutiert' : 'Community first: your topic is already discussed here'}</h2>
-          <p className="muted">{locale === 'de'
-            ? 'Stelle deine Frage auch in einer Community – dort antworten mehrere Entrepreneurs und Alumni mit Erfahrung aus vergleichbaren Märkten.'
-            : 'Also ask your question in a community – several entrepreneurs and alumni with experience from comparable markets can answer there.'}</p>
+          <h2 style={{ margin: '0 0 .3rem' }}>{trx('Community first: hier wird dein Thema schon diskutiert', 'Community first: your topic is already discussed here')}</h2>
+          <p className="muted">{trx('Stelle deine Frage auch in einer Community – dort antworten mehrere Entrepreneurs und Alumni mit Erfahrung aus vergleichbaren Märkten.', 'Also ask your question in a community – several entrepreneurs and alumni with experience from comparable markets can answer there.')}</p>
           <div className="grid grid-2">{communities.map((c) => <CommunityCard key={c.id} c={c} />)}</div>
         </div>
       )}
@@ -98,7 +96,7 @@ export default function QuestionDetail() {
                 <div className="flex wrap gap-sm" style={{ marginBottom: '.5rem' }}>
                   <small className="muted">{t('mentoring.why')}</small>
                   {m.matchedTags.map((tg, j) => (
-                    <span key={j} className="badge badge-domain">{locale === 'de' ? tg.de : tg.en}</span>
+                    <span key={j} className="badge badge-domain">{lx(tg)}</span>
                   ))}
                 </div>
               )}

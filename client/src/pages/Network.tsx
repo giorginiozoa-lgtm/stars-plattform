@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, lx, trx } from '../i18n';
 import { Avatar, Spinner, TagPill, timeAgo } from '../components';
 import type { IntroRequest, IntroSuggestion, IntroStatus, Tag } from '../types';
 
@@ -19,7 +19,7 @@ const STATUS: Record<IntroStatus, { de: string; en: string; cls: string }> = {
 
 function IntroForm({ tags, onDone }: { tags: Tag[]; onDone: () => void }) {
   const { locale, loc } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [f, setF] = useState({ target_profile: '', purpose: '' });
   const [sel, setSel] = useState<number[]>([]);
   const groups: [string, string, string][] = [
@@ -54,7 +54,7 @@ function IntroForm({ tags, onDone }: { tags: Tag[]; onDone: () => void }) {
 
 function AdminPanel({ intro, reload }: { intro: IntroRequest; reload: () => void }) {
   const { locale } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [sugg, setSugg] = useState<IntroSuggestion[] | null>(null);
   const [pick, setPick] = useState<number | null>(null);
   const [note, setNote] = useState('');
@@ -82,7 +82,7 @@ function AdminPanel({ intro, reload }: { intro: IntroRequest; reload: () => void
               <div className="grow">
                 <b>{s.user.name}</b> {s.peer && <span className="badge badge-stage">Peer</span>}
                 <div className="muted">{s.user.headline}</div>
-                <div className="flex wrap gap-sm">{s.matchedTags.map((t, i) => <span key={i} className="badge badge-domain">{t[locale]}</span>)}</div>
+                <div className="flex wrap gap-sm">{s.matchedTags.map((t, i) => <span key={i} className="badge badge-domain">{lx(t)}</span>)}</div>
               </div>
               <span className="badge badge-gold">{Math.round(s.score)}</span>
             </label>
@@ -101,7 +101,7 @@ function AdminPanel({ intro, reload }: { intro: IntroRequest; reload: () => void
 function IntroCard({ intro, reload }: { intro: IntroRequest; reload: () => void }) {
   const { user } = useAuth();
   const { locale } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [reply, setReply] = useState('');
   const st = STATUS[intro.status];
   const iAmSupporter = intro.supporter_id === user!.id;
@@ -113,7 +113,7 @@ function IntroCard({ intro, reload }: { intro: IntroRequest; reload: () => void 
           <b>{intro.requester_name}</b> <small className="muted">{intro.requester_country} · {timeAgo(intro.created_at, locale)}</small>
           <div className="muted clamp">{intro.requester_headline}</div>
         </div>
-        <span className={`badge ${st.cls} right`}>{st[locale]}</span>
+        <span className={`badge ${st.cls} right`}>{lx(st)}</span>
       </div>
       <p style={{ margin: '.6rem 0 .2rem' }}><b>{tx('Gesucht', 'Looking for')}:</b> {intro.target_profile}</p>
       <p className="muted" style={{ margin: 0 }}><b>{tx('Zweck', 'Purpose')}:</b> {intro.purpose}</p>
@@ -146,7 +146,7 @@ function IntroCard({ intro, reload }: { intro: IntroRequest; reload: () => void 
 export default function Network() {
   const { user } = useAuth();
   const { locale } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [intros, setIntros] = useState<IntroRequest[] | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [show, setShow] = useState(false);

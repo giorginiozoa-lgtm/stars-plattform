@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, dateLocale, lx, trx } from '../i18n';
 import { Avatar, RoleBadge, Spinner, timeAgo } from '../components';
 import type { Community, CommunitySession, CommunityPost, Role, Tag, SessionRequest } from '../types';
 
@@ -15,15 +15,15 @@ const SESSION_FORMAT: Record<string, { de: string; en: string }> = {
   pitch_learn: { de: 'Pitch & Learn', en: 'Pitch & learn' },
 };
 
-export function fmtDate(s: string, locale: 'de' | 'en') {
+export function fmtDate(s: string, _locale?: string) {
   const d = new Date(s.replace(' ', 'T') + 'Z');
-  return d.toLocaleString(locale === 'de' ? 'de-CH' : 'en-GB', { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleString(dateLocale(), { weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 export function CommunityCard({ c }: { c: Community }) {
   const { loc, locale } = useI18n();
   const nav = useNavigate();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   return (
     <div className="card card-hover" style={{ cursor: 'pointer' }} onClick={() => nav(`/communities/${c.id}`)}>
       <div className="flex items-center gap-sm">
@@ -32,7 +32,7 @@ export function CommunityCard({ c }: { c: Community }) {
       </div>
       <p className="muted" style={{ margin: '.4rem 0' }}>{loc(c, 'description')}</p>
       <div className="flex wrap gap-sm">
-        {c.tag_name_de && <span className={`badge ${c.tag_category === 'market' ? 'badge-market' : 'badge-domain'}`}>{locale === 'de' ? c.tag_name_de : c.tag_name_en}</span>}
+        {c.tag_name_de && <span className={`badge ${c.tag_category === 'market' ? 'badge-market' : 'badge-domain'}`}>{trx(c.tag_name_de, c.tag_name_en ?? c.tag_name_de)}</span>}
         <span className="badge">👥 {c.member_count}</span>
         <span className="badge">💬 {c.post_count}</span>
         {c.next_session && <span className="badge badge-stage">📅 {fmtDate(c.next_session, locale)}</span>}
@@ -44,7 +44,7 @@ export function CommunityCard({ c }: { c: Community }) {
 export default function Communities() {
   const { user } = useAuth();
   const { locale, loc } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [list, setList] = useState<Community[] | null>(null);
   const [tags, setTags] = useState<Tag[]>([]);
   const [show, setShow] = useState(false);
@@ -127,7 +127,7 @@ const REQ_STATUS: Record<SessionRequest['status'], { de: string; en: string }> =
 // die Moderation terminiert oder lehnt ab.
 function SlotRequests({ communityId, d, reload }: { communityId: string; d: DetailResp; reload: () => void }) {
   const { locale } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [open, setOpen] = useState(false);
   const [rf, setRf] = useState({ title: '', description: '', audience: '', preferred_date: '' });
   const [when, setWhen] = useState<Record<number, string>>({});
@@ -158,7 +158,7 @@ function SlotRequests({ communityId, d, reload }: { communityId: string; d: Deta
         <div key={r.id} className="list-item">
           <Avatar name={r.requester_name} seed={r.requester_avatar || undefined} size="sm" />
           <div className="grow">
-            <b>{r.title}</b> <span className={`badge ${r.status === 'approved' ? 'badge-resolved' : r.status === 'pending' ? 'badge-gold' : ''}`}>{REQ_STATUS[r.status][locale]}</span>
+            <b>{r.title}</b> <span className={`badge ${r.status === 'approved' ? 'badge-resolved' : r.status === 'pending' ? 'badge-gold' : ''}`}>{lx(REQ_STATUS[r.status])}</span>
             {r.description && <div className="muted">{r.description}</div>}
             <small>{r.requester_name}{r.audience ? ` · ${tx('Publikum', 'Audience')}: ${r.audience}` : ''}{r.preferred_date ? ` · ${tx('Wunsch', 'Preferred')}: ${r.preferred_date}` : ''}</small>
           </div>
@@ -183,7 +183,7 @@ function SlotRequests({ communityId, d, reload }: { communityId: string; d: Deta
 export function CommunityDetail() {
   const { id } = useParams();
   const { loc, locale } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [d, setD] = useState<DetailResp | null>(null);
   const [post, setPost] = useState('');
   const [showSession, setShowSession] = useState(false);
@@ -229,7 +229,7 @@ export function CommunityDetail() {
                   <div className="field"><label>{tx('Titel', 'Title')}</label><input value={sf.title} onChange={(e) => setSf({ ...sf, title: e.target.value })} required /></div>
                   <div className="field"><label>{tx('Format', 'Format')}</label>
                     <select value={sf.format} onChange={(e) => setSf({ ...sf, format: e.target.value })}>
-                      {Object.entries(SESSION_FORMAT).map(([k, v]) => <option key={k} value={k}>{v[locale]}</option>)}
+                      {Object.entries(SESSION_FORMAT).map(([k, v]) => <option key={k} value={k}>{lx(v)}</option>)}
                     </select></div>
                   <div className="field"><label>{tx('Zeitpunkt (UTC)', 'Time (UTC)')}</label><input type="datetime-local" value={sf.starts_at} onChange={(e) => setSf({ ...sf, starts_at: e.target.value })} required /></div>
                 </div>
@@ -242,7 +242,7 @@ export function CommunityDetail() {
               <div key={s.id} className="list-item">
                 <div className="date-chip">{fmtDate(s.starts_at, locale)}</div>
                 <div className="grow">
-                  <b>{s.title}</b> <span className="badge">{SESSION_FORMAT[s.format][locale]}</span>
+                  <b>{s.title}</b> <span className="badge">{lx(SESSION_FORMAT[s.format])}</span>
                   {s.description && <div className="muted">{s.description}</div>}
                   <small>{tx('mit', 'with')} {s.host_name} · {s.attendee_count} {tx('Teilnehmende', 'attendees')}</small>
                 </div>

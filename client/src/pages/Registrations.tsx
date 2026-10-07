@@ -1,7 +1,7 @@
 // Freigabe neuer Registrierungen durch stars (Administration).
 import { useEffect, useState } from 'react';
 import { api } from '../api';
-import { useI18n } from '../i18n';
+import { useI18n, lx, trx } from '../i18n';
 import { Avatar, Spinner, timeAgo } from '../components';
 import type { Role } from '../types';
 
@@ -26,7 +26,7 @@ const STATUS: Record<Account['status'], { de: string; en: string; cls: string }>
 
 export default function Registrations() {
   const { locale, t } = useI18n();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [users, setUsers] = useState<Account[] | null>(null);
   const [roles, setRoles] = useState<Record<number, Role>>({});
   const [filter, setFilter] = useState('');
@@ -91,7 +91,7 @@ export default function Registrations() {
               <b>{u.name}</b> <small className="muted">{u.email} · {t('role.' + u.role)}</small>
               <div className="muted">{u.country}</div>
             </div>
-            <span className={`badge ${STATUS[u.status].cls}`} style={{ alignSelf: 'center' }}>{STATUS[u.status][locale]}</span>
+            <span className={`badge ${STATUS[u.status].cls}`} style={{ alignSelf: 'center' }}>{lx(STATUS[u.status])}</span>
             {u.status === 'active'
               ? <button className="btn-ghost btn-sm" onClick={() => setStatus(u, 'rejected')}>{tx('Sperren', 'Block')}</button>
               : <button className="btn-outline btn-sm" onClick={() => setStatus(u, 'active')}>{tx('Freigeben', 'Approve')}</button>}

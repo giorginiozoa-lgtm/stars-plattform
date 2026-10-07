@@ -13,7 +13,7 @@ Der Prototyp realisiert die drei in der Disposition definierten Säulen:
 3. **Microlearning** – Bibliothek kurzer Lernmodule mit Fortschritts-Tracking
 
 Zusätzlich umgesetzte Kann-Ziele: Benachrichtigungen, rollenbasierte Dashboards
-(Admin/Mentor:in/Entrepreneur:in), Mehrsprachigkeit (DE/EN) sowie eine
+(Admin/Mentor:in/Entrepreneur:in), Mehrsprachigkeit (16 Sprachen, siehe unten) sowie eine
 Offline-/ressourcenschonende PWA-Fähigkeit (Service Worker).
 
 ### Iteration 2 – Programmlogik des BCP 2026
@@ -77,6 +77,28 @@ Zugang zu Stiftungen & CSR. Die Persona «Sunita Rai» ist fiktiv.
 npm run seed && npm start          # in einem Terminal
 node server/test/network.e2e.mjs   # 32 Prüfungen der Iteration 3
 ```
+
+### Sprachen
+
+Die Oberfläche ist in 16 Sprachen wählbar (Auswahl oben rechts und auf der
+Anmeldeseite; ohne Wahl gilt die Browsersprache): English, Deutsch, Français,
+Español, Português, العربية, हिन्दी, বাংলা, नेपाली, اردو, Kiswahili, አማርኛ,
+Tiếng Việt, Bahasa Indonesia, 中文, Türkçe. Arabisch und Urdu werden von rechts
+nach links dargestellt.
+
+Quelltexte stehen im Code auf Deutsch/Englisch (`tx(de, en)`, `{ de, en }`).
+Weitere Sprachen liegen als Kataloge in `client/src/locales/<code>.json`
+(Schlüssel = englischer Text) und werden erst beim Wechsel geladen.
+Nach Textänderungen im Code:
+
+```bash
+cd client && node scripts/extract-i18n.mjs   # zeigt je Sprache fehlende Texte
+```
+
+Fehlende Einträge erscheinen auf Englisch. Neue Sprache: Datei
+`locales/<code>.json` anlegen und in `LANGUAGES` (`src/i18n.tsx`) eintragen.
+Die Kataloge sind KI-übersetzt und sollten von Muttersprachigen geprüft werden.
+Beiträge der Nutzer:innen und Servermeldungen werden nicht übersetzt.
 
 ---
 

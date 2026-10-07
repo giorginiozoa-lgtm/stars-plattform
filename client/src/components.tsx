@@ -1,5 +1,5 @@
 // Kleine, wiederverwendbare Praesentationskomponenten.
-import { useI18n } from './i18n';
+import { useI18n, LANGUAGES } from './i18n';
 import type { Tag, Role } from './types';
 
 // Deterministische Farbe aus einem Seed (fuer Avatare ohne Bild-Upload).
@@ -53,21 +53,24 @@ export function Spinner() {
   return <div className="center-load">{t('common.loading')}</div>;
 }
 
-// Relative Zeitangabe, lokalisiert.
-export function timeAgo(iso: string, locale: 'de' | 'en'): string {
+// Relative Zeitangabe, lokalisiert (Intl, funktioniert fuer alle Sprachen).
+export function timeAgo(iso: string, locale: string): string {
   const then = new Date(iso.replace(' ', 'T') + (iso.includes('Z') ? '' : 'Z')).getTime();
-  const diff = Math.max(0, Date.now() - then);
-  const m = Math.floor(diff / 60000);
-  const h = Math.floor(m / 60);
-  const d = Math.floor(h / 24);
-  if (locale === 'de') {
-    if (d > 0) return `vor ${d} Tag${d > 1 ? 'en' : ''}`;
-    if (h > 0) return `vor ${h} Std.`;
-    if (m > 0) return `vor ${m} Min.`;
-    return 'gerade eben';
-  }
-  if (d > 0) return `${d}d ago`;
-  if (h > 0) return `${h}h ago`;
-  if (m > 0) return `${m}m ago`;
-  return 'just now';
+  const sec = Math.round((then - Date.now()) / 1000);
+  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const abs = Math.abs(sec);
+  if (abs < 60) return rtf.format(0, 'second');
+  if (abs < 3600) return rtf.format(Math.round(sec / 60), 'minute');
+  if (abs < 86400) return rtf.format(Math.round(sec / 3600), 'hour');
+  return rtf.format(Math.round(sec / 86400), 'day');
+}
+
+// Sprachauswahl (Kopfzeile und Anmeldeseite).
+export function LanguageToggle() {
+  const { locale, setLocale } = useI18n();
+  return (
+    <select className="lang-select" value={locale} onChange={(e) => setLocale(e.target.value)} aria-label="Language / Sprache">
+      {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
+    </select>
+  );
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, lx, trx } from '../i18n';
 import { Spinner } from '../components';
 import { STEP_LABEL, PROGRESS_LABEL } from '../journey';
 import { Stepper } from './Journey';
@@ -82,10 +82,10 @@ export default function Dashboard() {
     community_members: { de: 'Community-Mitglieder', en: 'Community members' },
     sessions_upcoming: { de: 'Geplante Sessions', en: 'Upcoming sessions' },
   };
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const prog = data.programme;
   const maxFunnel = Math.max(1, ...(prog?.funnel.map((f) => f.n) ?? [1]));
-  const lbl = (key: string) => labels[key]?.[locale] ?? key;
+  const lbl = (key: string) => (labels[key] ? lx(labels[key]) : key);
 
   const maxGrowth = Math.max(1, ...(data.growth?.map((g) => g.n) ?? [1]));
 
@@ -148,7 +148,7 @@ export default function Dashboard() {
               <b>{tx('Fälle je Schritt', 'Cases per step')}</b>
               {prog.funnel.map((f) => (
                 <div key={f.step} className="flex items-center gap-sm" style={{ margin: '.25rem 0' }}>
-                  <small style={{ width: 110 }}>{STEP_LABEL[f.step][locale]}</small>
+                  <small style={{ width: 110 }}>{lx(STEP_LABEL[f.step])}</small>
                   <div className="meter" style={{ flex: 1 }}><i style={{ width: `${(f.n / maxFunnel) * 100}%` }} /></div>
                   <small style={{ width: 20, textAlign: 'right' }}>{f.n}</small>
                 </div>
@@ -165,7 +165,7 @@ export default function Dashboard() {
               ))}
               <b className="mt" style={{ display: 'block' }}>{tx('Zielerreichung in Reviews', 'Goal attainment in reviews')}</b>
               <div className="flex wrap gap-sm mt-sm">
-                {Object.entries(prog.reviewMix).map(([key, v]) => <span key={key} className="badge">{PROGRESS_LABEL[key][locale]}: {v}</span>)}
+                {Object.entries(prog.reviewMix).map(([key, v]) => <span key={key} className="badge">{lx(PROGRESS_LABEL[key])}: {v}</span>)}
               </div>
             </div>
           </div>
@@ -174,7 +174,7 @@ export default function Dashboard() {
               <b>{tx('Zuletzt dokumentierte Outcomes', 'Recently documented outcomes')}</b>
               {prog.outcomes.map((o, i) => (
                 <div key={i} className="list-item" style={{ padding: '.45rem 0' }}>
-                  <span className={`badge ${o.progress === 'achieved' ? 'badge-resolved' : 'badge-matched'}`}>{PROGRESS_LABEL[o.progress][locale]}</span>
+                  <span className={`badge ${o.progress === 'achieved' ? 'badge-resolved' : 'badge-matched'}`}>{lx(PROGRESS_LABEL[o.progress])}</span>
                   <div className="grow"><b>{o.eem_name}</b> – {o.outcome}<div><small className="muted">{o.goal}</small></div></div>
                 </div>
               ))}

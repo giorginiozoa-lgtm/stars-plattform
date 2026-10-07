@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, trx } from '../i18n';
 import { Avatar, Spinner, TagPill, timeAgo } from '../components';
 import type { Question, Tag } from '../types';
 
@@ -90,7 +90,7 @@ export default function Mentoring() {
             {t('mentoring.ask')}
           </button>
           {selected.length === 0 && <small className="muted" style={{ display: 'block', marginTop: '.4rem' }}>
-            {locale === 'de' ? 'Bitte mindestens ein Fachgebiet wählen.' : 'Please select at least one domain.'}
+            {trx('Bitte mindestens ein Fachgebiet wählen.', 'Please select at least one domain.')}
           </small>}
         </form>
       )}

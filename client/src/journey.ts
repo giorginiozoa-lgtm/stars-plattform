@@ -2,6 +2,7 @@
 // Unterstuetzungsformate, Rollen und der Fragenkatalog der vier Online-
 // Frageboegen. Inhaltlich nach Eberle et al. (2026a), Kap. 5.1–5.3.
 import type { Step, Format, SupportRole, CaseType } from './types';
+import { lx } from './i18n';
 
 export type L = { de: string; en: string };
 
@@ -166,11 +167,11 @@ export const QUESTIONNAIRES: { area: 'context' | 'ecosystem' | 'venture' | 'entr
   },
 ];
 
-export function answerLabel(q: Question, v: string | string[] | undefined, locale: 'de' | 'en'): string {
+export function answerLabel(q: Question, v: string | string[] | undefined, _locale?: string): string {
   if (v === undefined || v === '' || (Array.isArray(v) && !v.length)) return '–';
   if (q.type === 'select' || q.type === 'multi') {
     const vals = Array.isArray(v) ? v : [v];
-    return vals.map((x) => q.options.find((op) => op.value === x)?.label[locale] ?? x).join(', ');
+    return vals.map((x) => q.options.find((op) => op.value === x)?.label ? lx(q.options.find((op) => op.value === x)!.label) : x).join(', ');
   }
   return Array.isArray(v) ? v.join(', ') : v;
 }

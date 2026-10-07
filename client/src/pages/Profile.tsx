@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, lx, trx } from '../i18n';
 import { Avatar, Spinner } from '../components';
 import type { Tag, User, SupportRole } from '../types';
 import { ROLE_LABEL, ROLE_HINT } from '../journey';
@@ -71,7 +71,7 @@ export default function Profile() {
     { key: 'stage', label: { de: 'Phasen', en: 'Stages' } },
     { key: 'network', label: { de: 'Netzwerkzugänge (für die Connector-Rolle)', en: 'Network access (for the connector role)' } },
   ];
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
 
   return (
     <div>
@@ -118,8 +118,8 @@ export default function Profile() {
               return (
                 <div key={r} className={`format ${on ? 'on' : ''}`} style={{ cursor: 'pointer' }}
                   onClick={() => setSupport({ ...support, roles: on ? support.roles.filter((x) => x !== r) : [...support.roles, r] })}>
-                  <b>{on ? '✓ ' : ''}{ROLE_LABEL[r][locale]}</b>
-                  <small>{ROLE_HINT[r][locale]}</small>
+                  <b>{on ? '✓ ' : ''}{lx(ROLE_LABEL[r])}</b>
+                  <small>{lx(ROLE_HINT[r])}</small>
                 </div>
               );
             })}
@@ -174,7 +174,7 @@ export default function Profile() {
         <p className="muted" style={{ marginTop: '-.4rem' }}>{t('profile.expertiseHint')}</p>
         {cats.map((cat) => (
           <div key={cat.key} className="mt-sm">
-            <label>{cat.label[locale]}</label>
+            <label>{lx(cat.label)}</label>
             <div className="flex wrap gap-sm">
               {catalog.filter((tg) => tg.category === cat.key).map((tg) => {
                 const active = myTags.has(tg.id);

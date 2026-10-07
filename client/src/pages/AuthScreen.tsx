@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, trx } from '../i18n';
+import { LanguageToggle } from '../components';
 import { isDemo } from '../config';
 
 export default function AuthScreen() {
@@ -52,14 +53,15 @@ export default function AuthScreen() {
           {mode === 'login' ? t('app.tagline') : t('app.tagline')}
         </p>
         <ul>
-          <li>Community-Foren für Entrepreneurs & Expert:innen</li>
-          <li>Intelligentes Frage-Experten-Matching</li>
-          <li>1:1-Mentoring per Direktnachricht</li>
-          <li>Microlearning-Bibliothek</li>
+          <li>{trx('Community-Foren für Entrepreneurs & Expert:innen', 'Community forums for entrepreneurs & experts')}</li>
+          <li>{trx('Intelligentes Frage-Experten-Matching', 'Smart question-to-expert matching')}</li>
+          <li>{trx('1:1-Mentoring per Direktnachricht', '1:1 mentoring via direct messages')}</li>
+          <li>{trx('Microlearning-Bibliothek', 'Microlearning library')}</li>
         </ul>
       </div>
 
       <div className="auth-form">
+        <div className="flex" style={{ justifyContent: 'flex-end', marginBottom: '.6rem' }}><LanguageToggle /></div>
         <form className="card" onSubmit={submit}>
           <h2>{mode === 'login' ? t('auth.welcome') : t('auth.createAccount')}</h2>
 

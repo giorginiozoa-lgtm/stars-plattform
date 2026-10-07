@@ -3,7 +3,7 @@ import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'reac
 import { useAuth } from './auth';
 import { useI18n } from './i18n';
 import { api } from './api';
-import { Avatar, Spinner, timeAgo } from './components';
+import { Avatar, Spinner, timeAgo, LanguageToggle } from './components';
 import type { Notification } from './types';
 
 import AuthScreen from './pages/AuthScreen';
@@ -24,16 +24,6 @@ import Network from './pages/Network';
 import Events from './pages/Events';
 import Feedback from './pages/Feedback';
 import Registrations from './pages/Registrations';
-
-function LanguageToggle() {
-  const { locale, setLocale } = useI18n();
-  return (
-    <div className="lang-toggle" role="group" aria-label="Language">
-      <button className={locale === 'de' ? 'active' : ''} onClick={() => setLocale('de')}>DE</button>
-      <button className={locale === 'en' ? 'active' : ''} onClick={() => setLocale('en')}>EN</button>
-    </div>
-  );
-}
 
 function NotificationBell() {
   const { t, locale } = useI18n();

@@ -1,7 +1,79 @@
-// Leichtes eigenes i18n (Kann-Ziel Mehrsprachigkeit DE/EN) ohne externe Library.
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+// Mehrsprachigkeit ohne externe Library.
+// Quelltexte stehen im Code auf Deutsch und Englisch (tx(de, en), { de, en },
+// Woerterbuch unten). Weitere Sprachen liegen als Uebersetzungskataloge in
+// src/locales/<code>.json (Schluessel = englischer Quelltext) und werden erst
+// bei Bedarf geladen. Fehlt eine Uebersetzung, erscheint der englische Text.
+import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 
-export type Locale = 'de' | 'en';
+export type Locale = string;
+
+// Verfuegbare Sprachen (Eigenbezeichnung). dir: Schreibrichtung.
+export const LANGUAGES: { code: string; name: string; dir?: 'rtl' }[] = [
+  { code: 'en', name: 'English' },
+  { code: 'de', name: 'Deutsch' },
+  { code: 'fr', name: 'Français' },
+  { code: 'es', name: 'Español' },
+  { code: 'pt', name: 'Português' },
+  { code: 'ar', name: 'العربية', dir: 'rtl' },
+  { code: 'hi', name: 'हिन्दी' },
+  { code: 'bn', name: 'বাংলা' },
+  { code: 'ne', name: 'नेपाली' },
+  { code: 'ur', name: 'اردو', dir: 'rtl' },
+  { code: 'sw', name: 'Kiswahili' },
+  { code: 'am', name: 'አማርኛ' },
+  { code: 'vi', name: 'Tiếng Việt' },
+  { code: 'id', name: 'Bahasa Indonesia' },
+  { code: 'zh', name: '中文' },
+  { code: 'tr', name: 'Türkçe' },
+];
+const SUPPORTED = new Set(LANGUAGES.map((l) => l.code));
+
+// Kataloge werden lazy geladen (geringe Bandbreite: nur die gewaehlte Sprache).
+const loaders = import.meta.glob<{ default: Record<string, string> }>(['./locales/*.json', '!./locales/_source.json']);
+const catalogs: Record<string, Record<string, string>> = {};
+async function loadCatalog(code: string) {
+  if (code === 'de' || code === 'en' || catalogs[code]) return;
+  const load = loaders[`./locales/${code}.json`];
+  if (load) catalogs[code] = (await load()).default;
+}
+
+// Aktuelle Sprache auf Modulebene, damit auch Hilfsfunktionen ausserhalb von
+// Komponenten (lx, trx) uebersetzen koennen; Komponenten rendern ueber den
+// Context ohnehin neu, wenn die Sprache wechselt.
+let current: Locale = 'en';
+
+/** Uebersetzt einen englischen Quelltext in die aktuelle Sprache (ausser de/en). */
+function fromEn(en: string): string {
+  return catalogs[current]?.[en] ?? en;
+}
+/** Waehlt die passende Sprachvariante eines Quelltextpaars. */
+export function trx(de: string, en: string): string {
+  if (current === 'de') return de;
+  if (current === 'en') return en;
+  return fromEn(en);
+}
+/** Wie trx, fuer Objekte der Form { de, en }. */
+export function lx(o: { de: string; en: string } | undefined | null): string {
+  if (!o) return '';
+  return trx(o.de, o.en);
+}
+/** Locale fuer Datums-/Zahlenformate (Intl). */
+export function dateLocale(): string {
+  return current === 'de' ? 'de-CH' : current === 'en' ? 'en-GB' : current;
+}
+
+function initialLocale(): Locale {
+  try {
+    const saved = localStorage.getItem('stars_locale');
+    if (saved && SUPPORTED.has(saved)) return saved;
+  } catch { /* ignore */ }
+  for (const l of navigator.languages || [navigator.language]) {
+    const code = (l || '').slice(0, 2).toLowerCase();
+    if (SUPPORTED.has(code)) return code;
+  }
+  return 'en';
+}
+
 
 const dict: Record<string, { de: string; en: string }> = {
   'app.name': { de: 'stars', en: 'stars' },
@@ -125,31 +197,58 @@ const dict: Record<string, { de: string; en: string }> = {
   'role.admin': { de: 'Administration', en: 'Administration' },
 };
 
+
 interface I18nCtx {
   locale: Locale;
   setLocale: (l: Locale) => void;
   t: (key: string) => string;
   loc: <T extends Record<string, any>>(obj: T, field: string) => string;
+  tx: (de: string, en: string) => string;
+  lx: (o: { de: string; en: string } | undefined | null) => string;
 }
 
 const Ctx = createContext<I18nCtx>(null as any);
 
+function applyDocument(l: Locale) {
+  document.documentElement.lang = l;
+  document.documentElement.dir = LANGUAGES.find((x) => x.code === l)?.dir || 'ltr';
+}
+
 export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(
-    (localStorage.getItem('stars_locale') as Locale) || 'de'
-  );
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    const l = initialLocale();
+    current = l;
+    return l;
+  });
+  // Zaehler erzwingt ein Neurendern, sobald ein Katalog geladen ist.
+  const [, setLoaded] = useState(0);
+
+  useEffect(() => {
+    applyDocument(locale);
+    loadCatalog(locale).then(() => setLoaded((n) => n + 1));
+  }, [locale]);
+
   const setLocale = useCallback((l: Locale) => {
-    localStorage.setItem('stars_locale', l);
-    document.documentElement.lang = l;
-    setLocaleState(l);
+    try { localStorage.setItem('stars_locale', l); } catch { /* ignore */ }
+    loadCatalog(l).then(() => {
+      current = l;
+      setLocaleState(l);
+    });
   }, []);
-  const t = useCallback((key: string) => dict[key]?.[locale] ?? key, [locale]);
-  // Waehlt das lokalisierte Feld (z.B. loc(forum, 'title') -> title_de/title_en).
-  const loc = useCallback(
-    (obj: Record<string, any>, field: string) => obj?.[`${field}_${locale}`] ?? obj?.[field] ?? '',
-    [locale]
-  );
-  return <Ctx.Provider value={{ locale, setLocale, t, loc }}>{children}</Ctx.Provider>;
+
+  const t = useCallback((key: string) => (dict[key] ? lx(dict[key]) : key), [locale]);
+  // Waehlt das lokalisierte Feld (z.B. loc(forum, 'title') -> title_de/title_en);
+  // weitere Sprachen uebersetzen die englische Fassung ueber den Katalog.
+  const loc = useCallback((obj: Record<string, any>, field: string) => {
+    if (!obj) return '';
+    const de = obj[`${field}_de`];
+    const en = obj[`${field}_en`] ?? obj[field] ?? de ?? '';
+    if (de === undefined) return current === 'de' || current === 'en' ? en : fromEn(en);
+    return trx(de, en);
+  }, [locale]);
+
+  current = locale;
+  return <Ctx.Provider value={{ locale, setLocale, t, loc, tx: trx, lx }}>{children}</Ctx.Provider>;
 }
 
 export function useI18n() {

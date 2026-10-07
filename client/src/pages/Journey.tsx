@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, lx, trx } from '../i18n';
 import { Avatar, Spinner, timeAgo } from '../components';
 import { STEP_ORDER, STEP_LABEL, STEP_OUTPUT, CASE_TYPE_LABEL, ROLE_LABEL } from '../journey';
 import type { CaseListItem, Step } from '../types';
@@ -13,7 +13,7 @@ import type { CaseListItem, Step } from '../types';
 export function StepBadge({ step }: { step: Step }) {
   const { locale } = useI18n();
   const cls = step === 'closed' ? 'badge-resolved' : step === 'intake' ? 'badge-open' : 'badge-matched';
-  return <span className={`badge ${cls}`}>{STEP_LABEL[step][locale]}</span>;
+  return <span className={`badge ${cls}`}>{lx(STEP_LABEL[step])}</span>;
 }
 
 export function Stepper({ step }: { step: Step }) {
@@ -22,9 +22,9 @@ export function Stepper({ step }: { step: Step }) {
   return (
     <ol className="stepper">
       {STEP_ORDER.map((s, i) => (
-        <li key={s} className={i < idx ? 'done' : i === idx ? 'current' : ''} title={STEP_OUTPUT[s][locale]}>
+        <li key={s} className={i < idx ? 'done' : i === idx ? 'current' : ''} title={lx(STEP_OUTPUT[s])}>
           <span className="n">{i < idx ? '✓' : i + 1}</span>
-          <span className="l">{STEP_LABEL[s][locale]}</span>
+          <span className="l">{lx(STEP_LABEL[s])}</span>
         </li>
       ))}
     </ol>
@@ -34,14 +34,14 @@ export function Stepper({ step }: { step: Step }) {
 function CaseCard({ c }: { c: CaseListItem }) {
   const { locale } = useI18n();
   const nav = useNavigate();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   return (
     <div className="card card-hover" style={{ cursor: 'pointer', padding: '.8rem' }} onClick={() => nav(`/journey/${c.id}`)}>
       <div className="flex items-center gap-sm">
         <Avatar name={c.eem.name} seed={c.eem.avatar_seed} size="sm" />
         <div style={{ minWidth: 0 }}>
           <b className="clamp" style={{ display: 'block' }}>{c.eem.name}</b>
-          <small>{c.eem.country}{c.case_type ? ` · ${CASE_TYPE_LABEL[c.case_type][locale]}` : ''}</small>
+          <small>{c.eem.country}{c.case_type ? ` · ${lx(CASE_TYPE_LABEL[c.case_type])}` : ''}</small>
         </div>
       </div>
       {c.prioritized.length > 0 && (
@@ -61,7 +61,7 @@ function CaseCard({ c }: { c: CaseListItem }) {
         {c.next_review && <span className="badge badge-stage">Review {c.next_review}</span>}
         {c.my_invitations?.map((m) => (
           <span key={m.id} className={`badge ${m.status === 'confirmed' ? 'badge-resolved' : 'badge-gold'}`}>
-            {ROLE_LABEL[m.role][locale]} · {m.status === 'confirmed' ? tx('bestätigt', 'confirmed') : m.supporter_ok ? tx('zugesagt', 'accepted') : tx('Anfrage offen', 'request open')}
+            {lx(ROLE_LABEL[m.role])} · {m.status === 'confirmed' ? tx('bestätigt', 'confirmed') : m.supporter_ok ? tx('zugesagt', 'accepted') : tx('Anfrage offen', 'request open')}
           </span>
         ))}
       </div>
@@ -74,7 +74,7 @@ export default function Journey() {
   const { user } = useAuth();
   const { locale } = useI18n();
   const nav = useNavigate();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const [cases, setCases] = useState<CaseListItem[] | null>(null);
   const [motivation, setMotivation] = useState('');
   const [error, setError] = useState('');
@@ -120,7 +120,7 @@ export default function Journey() {
               <span className="right"><StepBadge step={open.step} /></span>
             </div>
             <Stepper step={open.step} />
-            <p className="muted">{tx('Nächster Output', 'Next output')}: {STEP_OUTPUT[open.step][locale]}</p>
+            <p className="muted">{tx('Nächster Output', 'Next output')}: {lx(STEP_OUTPUT[open.step])}</p>
             <Link className="btn btn-gold" to={`/journey/${open.id}`}>{tx('Fall öffnen', 'Open case')}</Link>{' '}
             <Link className="btn btn-outline" to="/journey/profile">{tx('Mein EEM-Profil', 'My EEM profile')}</Link>
           </div>
@@ -185,10 +185,10 @@ export default function Journey() {
           return (
             <div key={s} className="board-col">
               <div className="board-head">
-                <b>{STEP_LABEL[s][locale]}</b>
+                <b>{lx(STEP_LABEL[s])}</b>
                 <span className="badge right">{list.length}</span>
               </div>
-              <small className="muted" style={{ display: 'block', marginBottom: '.4rem' }}>{STEP_OUTPUT[s][locale]}</small>
+              <small className="muted" style={{ display: 'block', marginBottom: '.4rem' }}>{lx(STEP_OUTPUT[s])}</small>
               {list.map((c) => <CaseCard key={c.id} c={c} />)}
             </div>
           );

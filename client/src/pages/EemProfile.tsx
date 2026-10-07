@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
+import { useI18n, lx, trx } from '../i18n';
 import { Spinner } from '../components';
 import { QUESTIONNAIRES, CASE_TYPE_LABEL, type Question } from '../journey';
 import type { Answers, CaseType, EemProfile as Profile } from '../types';
@@ -22,7 +22,7 @@ function Field({ q, value, onChange }: { q: Question; value: string | string[] |
       <div className="flex wrap gap-sm">
         {q.options.map((op) => (
           <button type="button" key={op.value} className={value === op.value ? 'btn-sm btn-gold' : 'btn-sm btn-outline'}
-            onClick={() => onChange(value === op.value ? '' : op.value)}>{op.label[locale]}</button>
+            onClick={() => onChange(value === op.value ? '' : op.value)}>{lx(op.label)}</button>
         ))}
       </div>
     );
@@ -32,7 +32,7 @@ function Field({ q, value, onChange }: { q: Question; value: string | string[] |
     <div className="flex wrap gap-sm">
       {q.options.map((op) => (
         <button type="button" key={op.value} className={arr.includes(op.value) ? 'btn-sm btn-gold' : 'btn-sm btn-outline'}
-          onClick={() => onChange(arr.includes(op.value) ? arr.filter((x) => x !== op.value) : [...arr, op.value])}>{op.label[locale]}</button>
+          onClick={() => onChange(arr.includes(op.value) ? arr.filter((x) => x !== op.value) : [...arr, op.value])}>{lx(op.label)}</button>
       ))}
     </div>
   );
@@ -43,7 +43,7 @@ export default function EemProfile() {
   const { user } = useAuth();
   const { locale } = useI18n();
   const nav = useNavigate();
-  const tx = (de: string, en: string) => (locale === 'de' ? de : en);
+  const tx = trx;
   const isAdmin = user!.role === 'admin';
   const path = userId ? `/journey/profile/${userId}` : '/journey/profile';
 
@@ -90,7 +90,7 @@ export default function EemProfile() {
           <b>{tx('Falltyp', 'Case type')}:</b>
           {(Object.keys(CASE_TYPE_LABEL) as CaseType[]).map((ct) => (
             <button key={ct} type="button" className={caseType === ct ? 'btn-sm btn-gold' : 'btn-sm btn-outline'} onClick={() => setCaseType(ct)}>
-              {CASE_TYPE_LABEL[ct][locale]}
+              {lx(CASE_TYPE_LABEL[ct])}
             </button>
           ))}
           <span className="right">
@@ -108,17 +108,17 @@ export default function EemProfile() {
       <div className="tabs mt">
         {QUESTIONNAIRES.map((qq, i) => (
           <button key={qq.area} className={i === tab ? 'active' : ''} onClick={() => setTab(i)}>
-            {qq.title[locale].split(' – ')[0]} <small>({filledCount(qq.area)}/{qq.questions.length})</small>
+            {lx(qq.title).split(' – ')[0]} <small>({filledCount(qq.area)}/{qq.questions.length})</small>
           </button>
         ))}
       </div>
 
       <div className="card">
-        <h3>{q.title[locale]}</h3>
-        <p className="muted">{q.intro[locale]}</p>
+        <h3>{lx(q.title)}</h3>
+        <p className="muted">{lx(q.intro)}</p>
         {q.questions.map((qq) => (
           <div className="field" key={qq.key}>
-            <label>{qq.label[locale]}</label>
+            <label>{lx(qq.label)}</label>
             <Field q={qq} value={answers[q.area][qq.key]} onChange={(v) => setAnswers({ ...answers, [q.area]: { ...answers[q.area], [qq.key]: v } })} />
           </div>
         ))}
