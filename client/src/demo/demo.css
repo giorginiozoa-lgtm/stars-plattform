@@ -1,0 +1,31 @@
+/* Nur fuer die Einzeldatei-Demo: Hinweis-Chip unten rechts. */
+.demo-chip {
+  position: fixed;
+  right: .75rem;
+  bottom: .75rem;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .35rem .5rem .35rem .7rem;
+  border-radius: 999px;
+  background: rgba(14, 42, 71, .92);
+  color: #fff;
+  font-size: .75rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, .25);
+  opacity: .55;
+  transition: opacity .15s ease;
+}
+.demo-chip:hover { opacity: 1; }
+.demo-chip button {
+  border: 1px solid rgba(255, 255, 255, .35);
+  background: transparent;
+  color: #fff;
+  border-radius: 999px;
+  padding: .15rem .55rem;
+  font-size: .72rem;
+  cursor: pointer;
+}
+.demo-chip button:hover { background: rgba(255, 255, 255, .15); }
+
+@media print { .demo-chip { display: none; } }

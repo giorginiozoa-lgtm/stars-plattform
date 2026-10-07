@@ -1,0 +1,10 @@
+node_modules/
+client/dist/
+client/demo-dist/
+stars-Prototyp-Demo.html
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.sqlite.snapshot
+.env
+.env.*

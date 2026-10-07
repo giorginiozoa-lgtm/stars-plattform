@@ -1,0 +1,24 @@
+# Render Blueprint – kostenloser Mehrbenutzer-Testbetrieb der stars-Plattform.
+# Einrichtung: https://dashboard.render.com -> New -> Blueprint -> dieses Repository.
+# Der Gratis-Dienst hat kein dauerhaftes Dateisystem; die SQLite-Datenbank wird
+# daher in ein privates GitHub-Repository gesichert (server/src/backup.js).
+services:
+  - type: web
+    name: stars-plattform
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm run install:all && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSWORD        # Passwort fuer admin@the-stars.ch (im Dashboard setzen)
+        sync: false
+      - key: BACKUP_REPO           # z.B. giorginiozoa-lgtm/stars-plattform-data (privat!)
+        sync: false
+      - key: BACKUP_TOKEN          # Fine-grained Token: nur dieses Repo, Contents read/write
+        sync: false
