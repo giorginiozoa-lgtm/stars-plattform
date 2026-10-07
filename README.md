@@ -69,6 +69,11 @@ Abgeleitet aus dem Feedback einer stars-Fellow (Oktober 2026):
     Seite) – Kategorie, Bereich, Bewertung, Freitext, Seite; Admin triagiert,
     antwortet und exportiert als CSV.
 
+12. **KPI-Dashboard** (`/analytics`, nur Admin) – Kennzahlen für 3/6/12/24 Monate
+    mit Vergleich zum Vorzeitraum, Monatsverläufe und Verteilungen als Diagramme
+    (jeweils auch als Tabelle) und **Excel-Export** (.xlsx, mehrere Blätter).
+13. **Freigabe neuer Registrierungen** (`/registrations`, nur Admin).
+
 Neue Schlagwörter für das Matching: institutioneller Vertrieb (B2G/B2B),
 internationale Expansion physischer Produkte, IP & Fertigungsskalierung,
 Zugang zu Stiftungen & CSR. Die Persona «Sunita Rai» ist fiktiv.

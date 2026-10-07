@@ -342,3 +342,22 @@ textarea { resize: vertical; min-height: 90px; }
 /* Rechts-nach-links-Sprachen (Arabisch, Urdu) */
 [dir='rtl'] .right { margin-left: 0; margin-right: auto; }
 [dir='rtl'] .sidebar nav a .ico { margin-right: 0; margin-left: .55rem; }
+
+/* KPI-Dashboard: Diagramme, Tooltip, Tabellenansicht */
+.chart-wrap { position: relative; }
+.chart-wrap svg { display: block; overflow: visible; }
+.chart-tip { position: absolute; pointer-events: none; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  box-shadow: 0 4px 14px rgba(14,42,71,.12); padding: .45rem .6rem; font-size: .8rem; min-width: 150px; z-index: 5; }
+.chart-tip i, .chart-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: .35rem; vertical-align: -1px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: .4rem 1rem; font-size: .82rem; color: var(--muted); margin-top: .3rem; }
+.data-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.data-table th, .data-table td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid var(--border); }
+.data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.barlist { display: flex; flex-direction: column; gap: .45rem; }
+.barlist-row { display: grid; grid-template-columns: minmax(90px, 38%) 1fr; gap: .6rem; align-items: center; font-size: .85rem; }
+.barlist-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.barlist-track { display: flex; align-items: center; gap: .4rem; min-width: 0; }
+.barlist-bar { display: block; height: 14px; border-radius: 0 4px 4px 0; max-width: 78%; min-width: 2px; }
+.barlist-val { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+.kpi-delta { display: block; margin-top: .25rem; font-size: .75rem; }
+.kpi-sm .num { font-size: 1.35rem; }

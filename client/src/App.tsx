@@ -24,6 +24,7 @@ import Network from './pages/Network';
 import Events from './pages/Events';
 import Feedback from './pages/Feedback';
 import Registrations from './pages/Registrations';
+import Analytics from './pages/Analytics';
 
 function NotificationBell() {
   const { t, locale } = useI18n();
@@ -103,7 +104,10 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     { to: '/learning', ico: '🎓', label: t('nav.learning') },
     { to: '/profile', ico: '⚙', label: t('nav.profile') },
     { to: '/feedback', ico: '💡', label: t('nav.feedback') },
-    ...(user!.role === 'admin' ? [{ to: '/registrations', ico: '✔', label: t('nav.registrations') }] : []),
+    ...(user!.role === 'admin' ? [
+      { to: '/analytics', ico: '📊', label: t('nav.analytics') },
+      { to: '/registrations', ico: '✔', label: t('nav.registrations') },
+    ] : []),
   ];
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
@@ -174,6 +178,7 @@ function Layout() {
             <Route path="/events" element={<Events />} />
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/registrations" element={<Registrations />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>

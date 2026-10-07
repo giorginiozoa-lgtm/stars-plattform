@@ -135,5 +135,12 @@ check('Sperre wirkt sofort auch auf bestehendes Token', r.status === 403);
 r = await call(amara, 'GET', '/mentors');
 check('Gesperrte Konten nicht im Verzeichnis', !r.data.mentors.some((m) => m.name === 'Neu Test'));
 
+// --- KPI-Dashboard -----------------------------------------------------------
+r = await call(amara, 'GET', '/analytics?months=6');
+check('KPI-Dashboard nur fuer stars', r.status === 403);
+r = await call(admin, 'GET', '/analytics?months=6');
+check('KPI-Dashboard liefert 6 Monate und Kennzahlen', r.data.months?.length === 6 && typeof r.data.kpis?.active_users === 'number' && r.data.series?.posts?.length === 6);
+check('Feedback im Zeitraum gezaehlt', r.data.kpis?.feedback >= 1 && r.data.feedback?.some((f) => f.key === 'idea'));
+
 console.log(fails ? `\n${fails} Fehler` : '\nAlle Tests bestanden');
 process.exit(fails ? 1 : 0);

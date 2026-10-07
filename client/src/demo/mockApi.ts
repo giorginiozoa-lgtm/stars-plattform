@@ -3035,6 +3035,105 @@ on('POST', '/events/registrations/:eventId/:userId/decide', true, ({ params, use
 const FEEDBACK_CATEGORIES = ['bug', 'idea', 'usability', 'praise', 'other'];
 const FEEDBACK_STATUSES = ['new', 'in_progress', 'done'];
 
+// --- KPI-Dashboard (server/src/routes/analytics.js) ---
+function monthList(n: number): string[] {
+  const out: string[] = [];
+  const d = new Date();
+  for (let i = n - 1; i >= 0; i--) out.push(new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - i, 1)).toISOString().slice(0, 7));
+  return out;
+}
+const isActive = (u: Row) => (u.status || 'active') === 'active';
+function periodKpis(from: string, to: string) {
+  const inW = (t: any) => !!t && t >= from && t < to;
+  const ids = new Set<number>();
+  S.threads.filter((r) => inW(r.created_at)).forEach((r) => ids.add(r.author_id));
+  S.comments.filter((r) => inW(r.created_at)).forEach((r) => ids.add(r.author_id));
+  S.community_posts.filter((r) => inW(r.created_at)).forEach((r) => ids.add(r.author_id));
+  S.messages.filter((r) => inW(r.created_at)).forEach((r) => ids.add(r.sender_id));
+  S.learning_progress.filter((r) => inW(r.updated_at)).forEach((r) => ids.add(r.user_id));
+  S.feedback.filter((r) => inW(r.created_at)).forEach((r) => ids.add(r.user_id));
+  const conf = S.case_matches.filter((m) => m.status === 'confirmed' && inW(m.confirmed_at));
+  const ttm = conf.length ? conf.reduce((a, m) => a + (julian(m.confirmed_at) - julian(m.created_at)), 0) / conf.length : null;
+  const rated = S.feedback.filter((f) => f.rating != null && inW(f.created_at));
+  const rating = rated.length ? rated.reduce((a, f) => a + f.rating, 0) / rated.length : null;
+  return {
+    new_users: S.users.filter((u) => u.role !== 'admin' && inW(u.created_at)).length,
+    active_users: ids.size,
+    posts: S.threads.filter((r) => inW(r.created_at)).length + S.community_posts.filter((r) => inW(r.created_at)).length,
+    comments: S.comments.filter((r) => inW(r.created_at)).length,
+    messages: S.messages.filter((r) => inW(r.created_at)).length,
+    matches_confirmed: conf.length,
+    intros_made: S.intro_requests.filter((i) => i.status === 'accepted' && inW(i.updated_at)).length,
+    goals_achieved: S.reviews.filter((r) => r.progress === 'achieved' && inW(r.created_at)).length,
+    modules_completed: S.learning_progress.filter((p) => p.completed === 1 && inW(p.updated_at)).length,
+    sessions_held: S.community_sessions.filter((s) => s.starts_at >= from.slice(0, 16) && s.starts_at < to.slice(0, 16)).length,
+    feedback: S.feedback.filter((f) => inW(f.created_at)).length,
+    avg_days_to_match: ttm == null ? null : Math.round(ttm * 10) / 10,
+    avg_rating: rating == null ? null : Math.round(rating * 10) / 10,
+  };
+}
+function countBy<T>(rows: T[], key: (r: T) => string) {
+  const m = new Map<string, number>();
+  rows.forEach((r) => m.set(key(r), (m.get(key(r)) || 0) + 1));
+  return [...m.entries()].map(([k, n]) => ({ key: k, n })).sort((a, b) => b.n - a.n || cmp(a.key, b.key));
+}
+
+on('GET', '/analytics', true, ({ query, user }) => {
+  if (user!.role !== 'admin') throw new HttpError(403, 'Keine Berechtigung');
+  const months = Math.min(36, Math.max(1, Number(query.get('months')) || 12));
+  const list = monthList(months);
+  const from = `${list[0]}-01 00:00:00`;
+  const to = fmt(new Date(Date.now() + 1000));
+  const pf = new Date(from.replace(' ', 'T') + 'Z');
+  pf.setUTCMonth(pf.getUTCMonth() - months);
+  const prevFrom = fmt(pf);
+  const per = (rows: Row[], col = 'created_at') => list.map((m) => rows.filter((r) => String(r[col] || '').slice(0, 7) === m).length);
+  const users = S.users.filter((u) => u.role !== 'admin');
+  const STEPS = ['intake', 'assessment', 'prioritization', 'support_plan', 'matching', 'agreement', 'implementation', 'reassessment', 'closed'];
+  return {
+    months: list,
+    period: { from, to, prevFrom },
+    kpis: periodKpis(from, to),
+    prev: periodKpis(prevFrom, from),
+    totals: {
+      users: users.filter(isActive).length,
+      entrepreneurs: users.filter((u) => u.role === 'entrepreneur' && isActive(u)).length,
+      mentors: users.filter((u) => u.role === 'mentor' && isActive(u)).length,
+      peer_experts: S.users.filter((u) => u.offers_peer_support === 1 && isActive(u)).length,
+      pending_registrations: S.users.filter((u) => u.status === 'pending').length,
+      countries: new Set(users.map((u) => u.country).filter(Boolean)).size,
+      communities: S.communities.length,
+      cases_active: S.cases.filter((c) => c.step !== 'closed').length,
+    },
+    series: {
+      registrations_entrepreneurs: per(S.users.filter((u) => u.role === 'entrepreneur')),
+      registrations_mentors: per(S.users.filter((u) => u.role === 'mentor')),
+      posts: list.map((m, i) => per(S.threads)[i] + per(S.community_posts)[i]),
+      comments: per(S.comments),
+      messages: per(S.messages),
+    },
+    journey: STEPS.map((s) => ({ step: s, n: S.cases.filter((c) => c.step === s).length })),
+    needs: countBy(S.needs.filter((n) => n.priority_rank != null), (n) => n.status),
+    intros: countBy(S.intro_requests, (i) => i.status),
+    feedback: countBy(S.feedback, (f) => f.category).map((x) => {
+      const r = S.feedback.filter((f) => f.category === x.key && f.rating != null);
+      return { ...x, avg_rating: r.length ? Math.round((r.reduce((a, f) => a + f.rating, 0) / r.length) * 10) / 10 : null };
+    }),
+    countries: countBy(users.filter((u) => isActive(u) && u.country), (u) => u.country).slice(0, 12),
+    communities: S.communities
+      .map((c) => ({ name_de: c.name_de, name_en: c.name_en,
+        members: S.community_members.filter((m) => m.community_id === c.id).length,
+        posts: S.community_posts.filter((p) => p.community_id === c.id).length }))
+      .sort((a, b) => b.members - a.members),
+    modules: S.learning_modules
+      .map((m) => ({ title_de: m.title_de, title_en: m.title_en,
+        started: S.learning_progress.filter((p) => p.module_id === m.id).length,
+        completed: S.learning_progress.filter((p) => p.module_id === m.id && p.completed === 1).length, id: m.id }))
+      .sort((a, b) => b.started - a.started || a.id - b.id)
+      .map(({ id: _id, ...rest }) => rest),
+  };
+});
+
 // --- Freigabe neuer Registrierungen (server/src/routes/users.js) ---
 on('GET', '/users', true, ({ user }) => {
   if (user!.role !== 'admin') throw new HttpError(403, 'Keine Berechtigung');
