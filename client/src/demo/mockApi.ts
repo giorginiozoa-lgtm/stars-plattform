@@ -27,7 +27,7 @@
 //   – Token als Base64-Payload statt signiertem JWT
 // ---------------------------------------------------------------------------
 
-const STORE_KEY = 'stars_demo_db_v3';
+const STORE_KEY = 'stars_demo_db_v4';
 
 type Row = Record<string, any>;
 
@@ -778,9 +778,8 @@ function seed() {
   );
 
   // 6c) Iteration 3: Netzwerkzugang, Give-back und Veranstaltungen.
-  //     Die Persona «Sunita Rai» ist FIKTIV und lediglich an ein Feedback aus dem
-  //     stars-Netzwerk angelehnt (EEM-Feedback, Oktober 2026); im oeffentlich
-  //     zugaenglichen Prototyp werden keine Echtnamen verwendet (Datenminimierung).
+  //     Der Fall bildet das Feedback von Vedika Murarka (Educase, Nepal) vom
+  //     Oktober 2026 ab; Namensnennung mit ihrer Einwilligung.
   const addTagIfMissing = (uid: number, slug: string, w: number) => {
     if (!S.user_tags.some((ut) => ut.user_id === uid && ut.tag_id === tagId[slug])) {
       S.user_tags.push({ user_id: uid, tag_id: tagId[slug], weight: w });
@@ -819,28 +818,28 @@ function seed() {
     for (const [slug, w] of m.tags) addTagIfMissing(id, slug, w);
   }
 
-  const sunita = addUser({
-    email: 'sunita.rai@example.com', name: 'Sunita Rai', role: 'entrepreneur', country: 'Nepal', region: 'South Asia',
-    headline: 'Gründerin, Hardware-EdTech (fiktive Persona)',
-    bio: 'Patentiertes Lerngerät für Schulen, in Nepal bewährt. Nächster Schritt: Operations in Indien, Kenia oder Bangladesch – über Institutionen der Bildungsentwicklung. Teilt gerne eigene Gründungserfahrung.',
-    languages: 'en', avatar: 'Sunita Rai', ago: '-20 days',
+  const vedika = addUser({
+    email: 'vedika.murarka@example.com', name: 'Vedika Murarka', role: 'entrepreneur', country: 'Nepal', region: 'South Asia',
+    headline: 'Gründerin, Educase (EdTech-Hardware)',
+    bio: 'Educase hat ein patentiertes Lernprodukt in Nepal erprobt. Nächster Schritt: Operations in einem neuen Land (z. B. Indien, Kenia oder Bangladesch) aufbauen – über Institutionen, die Bildungsentwicklungsprojekte umsetzen. Teilt gerne eigene Gründungserfahrung.',
+    languages: 'en', avatar: 'Vedika Murarka', ago: '-20 days',
   });
-  entIds['sunita.rai@example.com'] = sunita;
-  findUser(sunita)!.offers_peer_support = 1;
+  entIds['vedika.murarka@example.com'] = vedika;
+  findUser(vedika)!.offers_peer_support = 1;
   for (const [slug, w] of [['intl-expansion', 5], ['institutional-sales', 4], ['product', 4], ['market-sa', 5], ['stage-growth', 3]] as [string, number][])
-    addTagIfMissing(sunita, slug, w);
+    addTagIfMissing(vedika, slug, w);
 
   // Support-Journey-Fall im Matching: Der Matching Brief bildet das gewuenschte
   // Mentor:innen-Profil ab (institutioneller Vertrieb, Entwicklungsorganisationen,
   // Expansion physischer Produkte, IP/Fertigung).
-  addProfile(sunita, 'venture_scaler',
+  addProfile(vedika, 'venture_scaler',
     { target_markets: 'Indien, Kenia, Bangladesch', setting: 'mixed', conditions: ['regulation', 'capital_access'], conditions_note: 'Kein Vorbild eines nepalesischen Hardware-Produkts mit Operations im Ausland.' },
     { existing_support: ['informal_network'], access_quality: '2', gaps: 'Kaum Zugang zu Stiftungen, CSR-Programmen und Entwicklungsorganisationen.' },
     { sector: 'EdTech (Hardware)', business_model: 'Verkauf an Schulen und Bildungsprogramme (B2G/B2B)', stage: 'growth', employees: '11-50', revenue: '100k-1m' },
     { experience: '3-5', prior_programs: 'yes', hours_per_month: '4-8', languages: ['en'], mode: 'online', strengths: 'Patent, Produkt im Heimmarkt bewiesen' },
     '-6 days');
   const c6 = addCase({
-    eem: sunita, coord: admin, step: 'matching', decision: 'accepted',
+    eem: vedika, coord: admin, step: 'matching', decision: 'accepted',
     motivation: 'Wir möchten Operations in einem zweiten Land aufbauen und dafür mit Institutionen arbeiten, die Bildungsentwicklungsprojekte umsetzen.',
     expectations: 'Begleitung über 6 Monate; Fokus auf Markteintritt über Institutionen und Fertigung.',
     consent: '-1 days', reason: null, note: null, created: '-12 days', updated: '-1 days',
@@ -850,7 +849,7 @@ function seed() {
     bottleneck: 'Kein Zugang zu Entwicklungsorganisationen; keine Erfahrung im institutionellen Vertrieb im Ausland',
     support: 'Erfahrung im Verkauf physischer Produkte an Institutionen und in der Zusammenarbeit mit Entwicklungsorganisationen',
     criterion: 'Zwei qualifizierte Gespräche mit Institutionen im Zielland; Entscheid für ein Zielland',
-    r: 3, u: 3, i: 3, s: 3, f: 2, rank: 1, ago: '-5 days', by: sunita,
+    r: 3, u: 3, i: 3, s: 3, f: 2, rank: 1, ago: '-5 days', by: vedika,
     tags: ['institutional-sales', 'intl-expansion', 'market-sa', 'net-ngo'],
     plan: [['mentoring', 'Lead Mentor:in mit Erfahrung in B2G-Expansion'], ['introductions', 'Intros zu Alumni in Stiftungen/CSR'], ['stage', 'Pitch & Learn im Online Alumni Chapter']],
     brief: ['lead_mentor', 'Verkauf physischer Produkte an Institutionen; Expansion in andere Emerging Markets', 'Südasien oder Ostafrika', 'Entwicklungsorganisationen, Stiftungen/CSR', 'en', '6 Monate', 'online, zweiwöchentlich'],
@@ -859,7 +858,7 @@ function seed() {
     goal: 'Fertigung für mehrere Märkte skalieren und IP absichern',
     bottleneck: 'Patent nur national; Fertigung lokal und manuell',
     support: 'Fachexpertise IP und Skalierung der Fertigung', criterion: 'Fertigungs- und IP-Plan für ein Zielland',
-    r: 3, u: 2, i: 3, s: 2, f: 2, rank: 2, ago: '-5 days', by: sunita,
+    r: 3, u: 2, i: 3, s: 2, f: 2, rank: 2, ago: '-5 days', by: vedika,
     tags: ['ip-manufacturing', 'operations'],
     plan: [['skills', 'Sparring IP & Auftragsfertigung']],
     brief: ['expert', 'IP-Strategie und Auftragsfertigung', 'Asien', '', 'en', '3 Monate', 'online, punktuell'],
@@ -879,12 +878,12 @@ function seed() {
     tag_id: tagId['intl-expansion'], created_at: ago('-3 months'),
   });
   addMember(chapterId, admin, 'moderator');
-  for (const m of [sunita, M('martina.brunner@example.com'), M('priya.nair@example.com'), M('daniel.kiprop@example.com'),
+  for (const m of [vedika, M('martina.brunner@example.com'), M('priya.nair@example.com'), M('daniel.kiprop@example.com'),
     M('kenji.tanaka@example.com'), E('ravi.patel@example.com'), E('kwame.mensah@example.com'), M('anna.keller@example.com')]) addMember(chapterId, m, 'member');
   const addCPost = (author: number, body: string, a: string) =>
     S.community_posts.push({ id: nextId('community_posts'), community_id: chapterId, author_id: author, body, created_at: ago(a) });
-  addCPost(sunita, 'Hallo zusammen! Unser Lerngerät ist in Nepal erprobt und patentiert. Wer hat Erfahrung damit, über Stiftungen oder Bildungsprogramme in einen neuen Markt zu gehen?', '-4 days');
-  addCPost(M('priya.nair@example.com'), 'Sunita, Entwicklungsorganisationen beschaffen meist über Rahmenverträge. Frühzeitig klären: Zertifizierungen, Lieferfähigkeit, Referenzprojekte. Gerne mehr in deiner Session.', '-3 days');
+  addCPost(vedika, 'Hallo zusammen! Unser Lernprodukt von Educase ist in Nepal erprobt und patentiert. Wer hat Erfahrung damit, über Stiftungen oder Bildungsprogramme in einen neuen Markt zu gehen?', '-4 days');
+  addCPost(M('priya.nair@example.com'), 'Vedika, Entwicklungsorganisationen beschaffen meist über Rahmenverträge. Frühzeitig klären: Zertifizierungen, Lieferfähigkeit, Referenzprojekte. Gerne mehr in deiner Session.', '-3 days');
   addCPost(M('kenji.tanaka@example.com'), 'Wir haben unsere Holding in Singapur aufgebaut – Zugang zu Kapital und IP-Schutz war dort deutlich einfacher. Ich biete dazu eine Peer Session an.', '-2 days');
   // starts_at entspricht strftime('%Y-%m-%d 15:00', 'now', when)
   const addSession = (host: number, title: string, desc: string, format: string, when: string) => {
@@ -898,12 +897,12 @@ function seed() {
   const addAttendee = (sid: number, uid: number) => {
     if (!S.session_attendees.some((x) => x.session_id === sid && x.user_id === uid)) S.session_attendees.push({ session_id: sid, user_id: uid });
   };
-  const pitchSid = addSession(sunita, 'Pitch & Learn: Lernhardware über Bildungsinstitutionen skalieren',
-    'Sunita stellt ihr Produkt vor und lernt von Alumni aus Stiftungen und CSR, wie diese neue Innovationen übernehmen.', 'pitch_learn', '+12 days');
-  for (const a of [sunita, M('martina.brunner@example.com'), M('priya.nair@example.com')]) addAttendee(pitchSid, a);
+  const pitchSid = addSession(vedika, 'Pitch & Learn: Lernhardware über Bildungsinstitutionen skalieren',
+    'Vedika stellt ihr Produkt vor und lernt von Alumni aus Stiftungen und CSR, wie diese neue Innovationen übernehmen.', 'pitch_learn', '+12 days');
+  for (const a of [vedika, M('martina.brunner@example.com'), M('priya.nair@example.com')]) addAttendee(pitchSid, a);
   const sgSid = addSession(M('kenji.tanaka@example.com'), 'Singapur als Unternehmensbasis für Emerging-Market-Ventures',
     'Peer Session: Holding, Banking, IP – Erfahrungen und Fallstricke.', 'peer_session', '+20 days');
-  addAttendee(sgSid, sunita);
+  addAttendee(sgSid, vedika);
   S.session_requests.push({
     id: nextId('session_requests'), community_id: chapterId, requester_id: E('ravi.patel@example.com'),
     title: 'Pitch & Learn: Telemedizin für ländliche Kliniken',
@@ -923,7 +922,7 @@ function seed() {
     for (const t of tags) S.intro_request_tags.push({ intro_id: id, tag_id: tagId[t] });
     return id;
   };
-  addIntro(sunita, 'Alumni, die in oder mit Stiftungen bzw. CSR-Programmen mit Bildungsfokus arbeiten',
+  addIntro(vedika, 'Alumni, die in oder mit Stiftungen bzw. CSR-Programmen mit Bildungsfokus arbeiten',
     'Erfindung vorstellen und verstehen, wie Stiftungen neue Bildungsprojekte auswählen und übernehmen.', 'requested', null, null, '-2 days', '-2 days',
     ['net-foundations', 'net-ngo', 'institutional-sales', 'market-sa']);
   addIntro(E('omar.haddad@example.com'), 'Investor:in mit Erfahrung in EdTech im MENA-Raum',
@@ -933,7 +932,7 @@ function seed() {
   const seedNotif = (uid: number, type: string, title: string, body: string, link: string, a: string) =>
     S.notifications.push({ id: nextId('notifications'), user_id: uid, type, title, body, link, read_at: null, created_at: ago(a) });
   seedNotif(M('anna.keller@example.com'), 'match', 'stars möchte dich Omar Haddad vorstellen', 'Investor:in mit Erfahrung in EdTech im MENA-Raum', '/network?focus=2', '-1 days');
-  seedNotif(admin, 'system', 'Neue Intro-Anfrage', 'Sunita Rai: Alumni in Stiftungen/CSR mit Bildungsfokus', '/network?focus=1', '-2 days');
+  seedNotif(admin, 'system', 'Neue Intro-Anfrage', 'Vedika Murarka: Alumni in Stiftungen/CSR mit Bildungsfokus', '/network?focus=1', '-2 days');
 
   // Veranstaltungen von stars (Termine gemaess stars, Stand Oktober 2026).
   const ev: Record<string, number> = {};
@@ -957,10 +956,10 @@ function seed() {
   }
   const addReg = (eventId: number, uid: number, scholarship: number, motivation: string | null, status: string, a: string) =>
     S.event_registrations.push({ event_id: eventId, user_id: uid, scholarship, motivation, status, created_at: ago(a) });
-  addReg(ev['singapore-2027'], sunita, 1, 'Ohne Firmensponsoring kann ich die Teilnahme nicht finanzieren. Das Symposium wäre der Zugang zu Partnern für den Aufbau einer Unternehmensbasis in Singapur.', 'requested', '-3 days');
+  addReg(ev['singapore-2027'], vedika, 1, 'Als Entrepreneur aus einem Emerging Market ist der Zugang zu Symposien ohne Firmensponsoring schwierig. Ein subventionierter Platz würde mir die Teilnahme ermöglichen.', 'requested', '-3 days');
   addReg(ev['india-2027'], E('amara.okafor@example.com'), 0, null, 'interested', '-6 days');
   addReg(ev['india-2027'], E('ravi.patel@example.com'), 1, 'Austausch mit indischen HealthTech-Unternehmen und potenziellen Partnern vor Ort.', 'waitlist', '-9 days');
-  seedNotif(admin, 'system', 'Antrag auf Förderplatz', 'Sunita Rai: stars Singapore Symposium', `/events?focus=reg-${ev['singapore-2027']}-${sunita}`, '-3 days');
+  seedNotif(admin, 'system', 'Antrag auf Förderplatz', 'Vedika Murarka: stars Singapore Symposium', `/events?focus=reg-${ev['singapore-2027']}-${vedika}`, '-3 days');
 
   // 7) Start-Benachrichtigung -------------------------------------------
   S.notifications.push({

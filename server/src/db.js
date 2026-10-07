@@ -470,6 +470,33 @@ export function initSchema() {
   // Zusatzrecht: Lesezugriff auf das KPI-Dashboard ohne Admin-Rechte.
   addColumnIfMissing('users', 'can_view_analytics', 'INTEGER NOT NULL DEFAULT 0');
   extendSessionFormats();
+  renameDemoPersona();
+}
+
+// Der Beispielfall der dritten Iteration hiess zunaechst «Sunita Rai» (fiktive
+// Persona). Mit Einwilligung von Vedika Murarka wird er unter ihrem Namen
+// gefuehrt; bestehende Datenbanken werden einmalig angepasst (idempotent).
+function renameDemoPersona() {
+  const old = db.prepare(`SELECT id FROM users WHERE email = 'sunita.rai@example.com'`).get();
+  if (!old || db.prepare(`SELECT 1 FROM users WHERE email = 'vedika.murarka@example.com'`).get()) return;
+  withTx(() => {
+    db.prepare(
+      `UPDATE users SET email = 'vedika.murarka@example.com', name = 'Vedika Murarka', avatar_seed = 'Vedika Murarka',
+         headline = ?, bio = ? WHERE id = ?`
+    ).run('Gründerin, Educase (EdTech-Hardware)', 'Educase hat ein patentiertes Lernprodukt in Nepal erprobt. Nächster Schritt: Operations in einem neuen Land (z. B. Indien, Kenia oder Bangladesch) aufbauen – über Institutionen, die Bildungsentwicklungsprojekte umsetzen. Teilt gerne eigene Gründungserfahrung.', old.id);
+    const swap = (table, col) =>
+      db.prepare(`UPDATE ${table} SET ${col} = REPLACE(REPLACE(${col}, 'Sunita Rai', 'Vedika Murarka'), 'Sunita', 'Vedika') WHERE ${col} LIKE '%Sunita%'`).run();
+    swap('community_posts', 'body');
+    swap('community_sessions', 'description');
+    swap('notifications', 'title');
+    swap('notifications', 'body');
+    swap('intro_requests', 'vouch_note');
+    swap('intro_requests', 'response_note');
+    swap('messages', 'body');
+    swap('feedback', 'body');
+    db.prepare(`UPDATE community_posts SET body = REPLACE(body, 'Unser Lerngerät ist in Nepal', 'Unser Lernprodukt von Educase ist in Nepal') WHERE author_id = ?`).run(old.id);
+    db.prepare(`UPDATE event_registrations SET motivation = ? WHERE user_id = ? AND motivation LIKE 'Ohne Firmensponsoring%'`).run('Als Entrepreneur aus einem Emerging Market ist der Zugang zu Symposien ohne Firmensponsoring schwierig. Ein subventionierter Platz würde mir die Teilnahme ermöglichen.', old.id);
+  });
 }
 
 // SQLite kann CHECK-Constraints nicht per ALTER TABLE aendern. Bestehende

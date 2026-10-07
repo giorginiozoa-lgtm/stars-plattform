@@ -20,19 +20,19 @@ function check(label, cond, extra = '') {
 const login = async (email) => (await call(null, 'POST', '/auth/login', { email, password: 'stars1234' })).data.token;
 
 const admin = await login('admin@the-stars.ch');
-const sunita = await login('sunita.rai@example.com');
+const vedika = await login('vedika.murarka@example.com');
 const martina = await login('martina.brunner@example.com');
 const amara = await login('amara.okafor@example.com');
 const anna = await login('anna.keller@example.com');
 const ravi = await login('ravi.patel@example.com');
 
 // --- Warm Introductions (FA-23) ---------------------------------------------
-let r = await call(sunita, 'GET', '/intros');
+let r = await call(vedika, 'GET', '/intros');
 const intro = r.data.intros.find((i) => i.status === 'requested');
 check('EEM sieht eigene offene Intro-Anfrage', !!intro);
 r = await call(amara, 'GET', `/intros/${intro.id}`);
 check('Fremde sehen die Anfrage nicht', r.status === 404);
-r = await call(sunita, 'GET', `/intros/${intro.id}/suggestions`);
+r = await call(vedika, 'GET', `/intros/${intro.id}/suggestions`);
 check('Vorschlaege nur fuer stars', r.status === 403);
 r = await call(admin, 'GET', `/intros/${intro.id}/suggestions`);
 const top = r.data.suggestions?.[0];
@@ -41,13 +41,13 @@ check('Vorschlaege enthalten Alumni mit Stiftungs-/NGO-Zugang',
 const martinaId = r.data.suggestions.find((s) => s.user.name === 'Martina Brunner')?.user.id;
 r = await call(admin, 'POST', `/intros/${intro.id}/propose`, { supporter_id: martinaId });
 check('Vorschlag ohne Empfehlungsnotiz abgelehnt', r.status === 400);
-r = await call(admin, 'POST', `/intros/${intro.id}/propose`, { supporter_id: martinaId, vouch_note: 'stars kennt Sunita seit dem Symposium.' });
+r = await call(admin, 'POST', `/intros/${intro.id}/propose`, { supporter_id: martinaId, vouch_note: 'stars kennt Vedika seit dem Symposium.' });
 check('stars schlaegt Person mit Empfehlung vor', r.data.intro?.status === 'proposed');
 r = await call(anna, 'POST', `/intros/${intro.id}/respond`, { accept: true });
 check('Nur die vorgeschlagene Person kann antworten', r.status === 404);
 r = await call(martina, 'POST', `/intros/${intro.id}/respond`, { accept: true, note: 'Gerne!' });
 check('Annahme eroeffnet Konversation', r.data.intro?.status === 'accepted' && !!r.data.conversation_id);
-r = await call(sunita, 'GET', '/messages');
+r = await call(vedika, 'GET', '/messages');
 check('Konversation ist fuer EEM sichtbar', r.status === 200 && JSON.stringify(r.data).includes('Martina'));
 r = await call(admin, 'POST', `/intros/${intro.id}/propose`, { supporter_id: martinaId, vouch_note: 'x' });
 check('Angenommene Anfrage kann nicht neu vergeben werden', r.status === 409);
@@ -86,16 +86,16 @@ check('Session im Format Pitch & Learn', r.data.sessions.some((s) => s.id === (r
 
 // --- Peer-Expert:innen (FA-27) ---------------------------------------------
 r = await call(amara, 'GET', '/mentors');
-check('Peer-Expertin im Verzeichnis', r.data.mentors.some((m) => m.name === 'Sunita Rai' && m.offers_peer_support));
+check('Peer-Expertin im Verzeichnis', r.data.mentors.some((m) => m.name === 'Vedika Murarka' && m.offers_peer_support));
 check('Amara (ohne Opt-in) nicht im Verzeichnis', !r.data.mentors.some((m) => m.name === 'Amara Okafor'));
 await call(amara, 'PATCH', '/auth/me', { offers_peer_support: true });
 r = await call(amara, 'GET', '/mentors');
 check('Opt-in nimmt Amara ins Verzeichnis auf', r.data.mentors.some((m) => m.name === 'Amara Okafor'));
 
 // --- Feedback (FA-28) -------------------------------------------------------
-r = await call(sunita, 'POST', '/feedback', { category: 'nonsense', body: 'x' });
+r = await call(vedika, 'POST', '/feedback', { category: 'nonsense', body: 'x' });
 check('Ungueltige Kategorie abgelehnt', r.status === 400);
-r = await call(sunita, 'POST', '/feedback', { category: 'idea', area: 'Netzwerk', rating: 4, body: 'Filter nach Land waere hilfreich', page: '/network' });
+r = await call(vedika, 'POST', '/feedback', { category: 'idea', area: 'Netzwerk', rating: 4, body: 'Filter nach Land waere hilfreich', page: '/network' });
 check('Feedback gespeichert', r.status === 201);
 const fbId = r.data.id;
 r = await call(admin, 'GET', '/notifications');
@@ -103,11 +103,11 @@ check('Benachrichtigung fuehrt direkt zum Feedback', r.data.notifications.some((
 check('Benachrichtigung fuehrt direkt zur Intro-Anfrage', r.data.notifications.some((n) => /^\/network\?focus=\d+$/.test(n.link || '')));
 r = await call(amara, 'GET', '/feedback');
 check('Andere sehen fremdes Feedback nicht', !r.data.feedback.some((f) => f.id === fbId));
-r = await call(sunita, 'PATCH', `/feedback/${fbId}`, { status: 'done' });
+r = await call(vedika, 'PATCH', `/feedback/${fbId}`, { status: 'done' });
 check('Nur stars triagiert', r.status === 403);
 r = await call(admin, 'PATCH', `/feedback/${fbId}`, { status: 'in_progress', response: 'Danke, kommt in die nächste Iteration.' });
 check('Admin antwortet', r.data.feedback?.status === 'in_progress');
-r = await call(sunita, 'GET', '/feedback');
+r = await call(vedika, 'GET', '/feedback');
 check('Antwort fuer Absenderin sichtbar', r.data.feedback.find((f) => f.id === fbId)?.response?.startsWith('Danke'));
 r = await call(admin, 'GET', '/dashboard');
 check('Dashboard zeigt Netzwerk-Kennzahlen', typeof r.data.network?.feedback_new === 'number');
@@ -118,7 +118,7 @@ r = await call(null, 'POST', '/auth/register', neu);
 check('Registrierung wartet auf Freigabe', r.status === 202 && r.data.pending === true && !r.data.token);
 r = await call(null, 'POST', '/auth/login', { email: neu.email, password: neu.password });
 check('Login vor Freigabe gesperrt', r.status === 403 && r.data.code === 'pending');
-r = await call(sunita, 'GET', '/users');
+r = await call(vedika, 'GET', '/users');
 check('Nur stars sieht Registrierungen', r.status === 403);
 r = await call(admin, 'GET', '/users');
 const pendingUser = r.data.users?.find((u) => u.email === neu.email);

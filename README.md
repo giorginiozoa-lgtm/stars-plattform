@@ -76,7 +76,8 @@ Abgeleitet aus dem Feedback einer stars-Fellow (Oktober 2026):
 
 Neue Schlagwörter für das Matching: institutioneller Vertrieb (B2G/B2B),
 internationale Expansion physischer Produkte, IP & Fertigungsskalierung,
-Zugang zu Stiftungen & CSR. Die Persona «Sunita Rai» ist fiktiv.
+Zugang zu Stiftungen & CSR. Der Beispielfall bildet das Feedback von Vedika Murarka
+(Educase, Nepal) ab – Namensnennung mit ihrer Einwilligung.
 
 ```bash
 npm run seed && npm start          # in einem Terminal
@@ -223,7 +224,7 @@ Passwort für **alle** Konten: `stars1234`
 | Entrepreneur:in (Fall im Matching) | `kwame.mensah@example.com` |
 | Entrepreneur:in (Priorisierung)    | `linh.tran@example.com`    |
 | Expert:in mit offener Anfrage      | `fatima.zahra@example.com` |
-| Entrepreneur:in (Intro, Pitch & Learn, Förderplatz) | `sunita.rai@example.com` |
+| Entrepreneur:in (Intro, Pitch & Learn, Förderplatz) | `vedika.murarka@example.com` |
 
 Im Online-Betrieb (Render) gilt für `admin@the-stars.ch` das Passwort aus `ADMIN_PASSWORD`.
 
