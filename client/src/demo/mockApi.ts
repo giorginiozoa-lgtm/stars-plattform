@@ -932,8 +932,8 @@ function seed() {
     ['financing', 'net-investors', 'market-mena']);
   const seedNotif = (uid: number, type: string, title: string, body: string, link: string, a: string) =>
     S.notifications.push({ id: nextId('notifications'), user_id: uid, type, title, body, link, read_at: null, created_at: ago(a) });
-  seedNotif(M('anna.keller@example.com'), 'match', 'stars möchte dich Omar Haddad vorstellen', 'Investor:in mit Erfahrung in EdTech im MENA-Raum', '/network', '-1 days');
-  seedNotif(admin, 'system', 'Neue Intro-Anfrage', 'Sunita Rai: Alumni in Stiftungen/CSR mit Bildungsfokus', '/network', '-2 days');
+  seedNotif(M('anna.keller@example.com'), 'match', 'stars möchte dich Omar Haddad vorstellen', 'Investor:in mit Erfahrung in EdTech im MENA-Raum', '/network?focus=2', '-1 days');
+  seedNotif(admin, 'system', 'Neue Intro-Anfrage', 'Sunita Rai: Alumni in Stiftungen/CSR mit Bildungsfokus', '/network?focus=1', '-2 days');
 
   // Veranstaltungen von stars (Termine gemaess stars, Stand Oktober 2026).
   const ev: Record<string, number> = {};
@@ -960,7 +960,7 @@ function seed() {
   addReg(ev['singapore-2027'], sunita, 1, 'Ohne Firmensponsoring kann ich die Teilnahme nicht finanzieren. Das Symposium wäre der Zugang zu Partnern für den Aufbau einer Unternehmensbasis in Singapur.', 'requested', '-3 days');
   addReg(ev['india-2027'], E('amara.okafor@example.com'), 0, null, 'interested', '-6 days');
   addReg(ev['india-2027'], E('ravi.patel@example.com'), 1, 'Austausch mit indischen HealthTech-Unternehmen und potenziellen Partnern vor Ort.', 'waitlist', '-9 days');
-  seedNotif(admin, 'system', 'Antrag auf Förderplatz', 'Sunita Rai: stars Singapore Symposium', '/events', '-3 days');
+  seedNotif(admin, 'system', 'Antrag auf Förderplatz', 'Sunita Rai: stars Singapore Symposium', `/events?focus=reg-${ev['singapore-2027']}-${sunita}`, '-3 days');
 
   // 7) Start-Benachrichtigung -------------------------------------------
   S.notifications.push({
@@ -1449,7 +1449,7 @@ on('POST', '/auth/register', false, ({ body }) => {
   S.users.push(user);
   // Neue Registrierungen muessen von stars freigegeben werden.
   for (const a of S.users.filter((x) => x.role === 'admin')) {
-    notify(a.id, { type: 'system', title: 'Neue Registrierung zur Freigabe', body: `${name} (${role === 'mentor' ? 'Expert:in' : 'Entrepreneur:in'})`, link: '/registrations' });
+    notify(a.id, { type: 'system', title: 'Neue Registrierung zur Freigabe', body: `${name} (${role === 'mentor' ? 'Expert:in' : 'Entrepreneur:in'})`, link: `/registrations?focus=${user.id}` });
   }
   return { status: 202, data: { pending: true, message: statusMessage('pending') } };
 });
@@ -2716,12 +2716,13 @@ on('POST', '/communities/:id/sessions', true, ({ params, user, body }) => {
   const fmtName = SESSION_FORMATS.includes(format) ? format : 'peer_session';
   const community = S.communities.find((x) => x.id === id);
   if (!community) throw new Error('FOREIGN KEY constraint failed');
+  const newSid = nextId('community_sessions');
   S.community_sessions.push({
-    id: nextId('community_sessions'), community_id: id, host_id: user!.id, title, description: description || null,
+    id: newSid, community_id: id, host_id: user!.id, title, description: description || null,
     format: fmtName, starts_at: String(starts_at).replace('T', ' ').slice(0, 16), created_at: now(),
   });
   for (const m of S.community_members.filter((x) => x.community_id === id && x.user_id !== user!.id)) {
-    notify(m.user_id, { type: 'system', title: `Neue Session: ${title}`, body: community.name_de, link: `/communities/${id}` });
+    notify(m.user_id, { type: 'system', title: `Neue Session: ${title}`, body: community.name_de, link: `/communities/${id}?focus=session-${newSid}` });
   }
   return { status: 201, data: { ok: true } };
 });
@@ -2737,15 +2738,16 @@ on('POST', '/communities/:id/session-requests', true, ({ params, user, body }) =
   const { title, description, audience, preferred_date } = body || {};
   if (!title) throw new HttpError(400, 'title erforderlich');
   if (!S.communities.some((x) => x.id === id)) throw new Error('FOREIGN KEY constraint failed');
+  const newRid = nextId('session_requests');
   S.session_requests.push({
-    id: nextId('session_requests'), community_id: id, requester_id: user!.id, title,
+    id: newRid, community_id: id, requester_id: user!.id, title,
     description: description || null, audience: audience || null, preferred_date: preferred_date || null,
     status: 'pending', session_id: null, created_at: now(),
   });
   const mods = S.community_members.filter((m) => m.community_id === id && m.role === 'moderator');
   for (const m of mods) {
     if (m.user_id !== user!.id)
-      notify(m.user_id, { type: 'system', title: `Slot-Antrag: ${title}`, body: user!.name, link: `/communities/${id}` });
+      notify(m.user_id, { type: 'system', title: `Slot-Antrag: ${title}`, body: user!.name, link: `/communities/${id}?focus=req-${newRid}` });
   }
   return { status: 201, data: { ok: true } };
 });
@@ -2758,7 +2760,7 @@ on('POST', '/communities/session-requests/:rid/decide', true, ({ params, user, b
   const { approve, starts_at, format } = body || {};
   if (!approve) {
     r.status = 'declined';
-    notify(r.requester_id, { type: 'system', title: `Slot-Antrag abgelehnt: ${r.title}`, link: `/communities/${r.community_id}` });
+    notify(r.requester_id, { type: 'system', title: `Slot-Antrag abgelehnt: ${r.title}`, link: `/communities/${r.community_id}?focus=req-${r.id}` });
     return { ok: true };
   }
   if (!starts_at) throw new HttpError(400, 'starts_at erforderlich');
@@ -2778,7 +2780,7 @@ on('POST', '/communities/session-requests/:rid/decide', true, ({ params, user, b
     notify(m.user_id, {
       type: 'system',
       title: m.user_id === r.requester_id ? `Dein Slot ist bestätigt: ${r.title}` : `Neue Session: ${r.title}`,
-      link: `/communities/${r.community_id}`,
+      link: `/communities/${r.community_id}?focus=session-${sid}`,
     });
   }
   return { ok: true, session_id: sid };
@@ -2844,7 +2846,7 @@ on('POST', '/intros', true, ({ user, body }) => {
     if (!S.intro_request_tags.some((x) => x.intro_id === id && x.tag_id === t)) S.intro_request_tags.push({ intro_id: id, tag_id: t });
   }
   for (const a of admins()) {
-    notify(a, { type: 'system', title: 'Neue Intro-Anfrage', body: `${user!.name}: ${target_profile}`, link: '/network' });
+    notify(a, { type: 'system', title: 'Neue Intro-Anfrage', body: `${user!.name}: ${target_profile}`, link: `/network?focus=${id}` });
   }
   return { status: 201, data: { id } };
 });
@@ -2903,9 +2905,9 @@ on('POST', '/intros/:id/propose', true, ({ params, user, body }) => {
   const row = S.intro_requests.find((x) => x.id === intro.id)!;
   Object.assign(row, { status: 'proposed', supporter_id: supporter.id, vouch_note, response_note: null, updated_at: now() });
   notify(supporter.id, {
-    type: 'match', title: `stars möchte dich ${intro.requester_name} vorstellen`, body: intro.target_profile, link: '/network',
+    type: 'match', title: `stars möchte dich ${intro.requester_name} vorstellen`, body: intro.target_profile, link: `/network?focus=${intro.id}`,
   });
-  notify(intro.requester_id, { type: 'system', title: 'Deine Intro-Anfrage ist in Bearbeitung', body: `Vorgeschlagen: ${supporter.name}`, link: '/network' });
+  notify(intro.requester_id, { type: 'system', title: 'Deine Intro-Anfrage ist in Bearbeitung', body: `Vorgeschlagen: ${supporter.name}`, link: `/network?focus=${intro.id}` });
   return { intro: loadIntro(intro.id) };
 });
 
@@ -2920,7 +2922,7 @@ on('POST', '/intros/:id/respond', true, ({ params, user, body }) => {
   if (!accept) {
     Object.assign(row, { status: 'declined', response_note: note || null, updated_at: now() });
     for (const a of admins()) {
-      notify(a, { type: 'system', title: 'Vorstellung abgelehnt', body: `${user!.name} → ${intro.requester_name}`, link: '/network' });
+      notify(a, { type: 'system', title: 'Vorstellung abgelehnt', body: `${user!.name} → ${intro.requester_name}`, link: `/network?focus=${intro.id}` });
     }
     return { intro: loadIntro(intro.id) };
   }
@@ -2949,7 +2951,7 @@ on('POST', '/intros/:id/close', true, ({ params, user, body }) => {
   const { note } = body || {};
   const row = S.intro_requests.find((x) => x.id === intro.id)!;
   Object.assign(row, { status: 'closed', response_note: note || row.response_note, updated_at: now() });
-  notify(intro.requester_id, { type: 'system', title: 'Intro-Anfrage abgeschlossen', body: note || intro.target_profile, link: '/network' });
+  notify(intro.requester_id, { type: 'system', title: 'Intro-Anfrage abgeschlossen', body: note || intro.target_profile, link: `/network?focus=${intro.id}` });
   return { intro: loadIntro(intro.id) };
 });
 
@@ -3005,7 +3007,7 @@ on('POST', '/events/:id/register', true, ({ params, user, body }) => {
   else S.event_registrations.push({ event_id: ev.id, user_id: user!.id, ...values, created_at: now() });
   if (scholarship) {
     for (const a of admins()) {
-      notify(a, { type: 'system', title: 'Antrag auf Förderplatz', body: `${user!.name}: ${ev.title_de}`, link: '/events' });
+      notify(a, { type: 'system', title: 'Antrag auf Förderplatz', body: `${user!.name}: ${ev.title_de}`, link: `/events?focus=reg-${ev.id}-${user!.id}` });
     }
   }
   return { ok: true, status };
@@ -3026,7 +3028,7 @@ on('POST', '/events/registrations/:eventId/:userId/decide', true, ({ params, use
   reg.status = status;
   const ev = S.events.find((x) => x.id === reg.event_id)!;
   const label = ({ granted: 'gewährt', waitlist: 'auf der Warteliste', declined: 'abgelehnt' } as Record<string, string>)[status];
-  notify(reg.user_id, { type: 'system', title: `Förderplatz ${label}`, body: ev.title_de, link: '/events' });
+  notify(reg.user_id, { type: 'system', title: `Förderplatz ${label}`, body: ev.title_de, link: `/events?focus=ev-${ev.id}` });
   return { ok: true };
 });
 
@@ -3201,7 +3203,7 @@ on('POST', '/feedback', true, ({ user, body }) => {
     page: page ? String(page).slice(0, 200) : null, status: 'new', response: null, created_at: ts, updated_at: ts,
   });
   for (const a of admins().filter((a) => a !== user!.id)) {
-    notify(a, { type: 'system', title: 'Neues Feedback', body: `${user!.name}: ${String(text).slice(0, 80)}`, link: '/feedback' });
+    notify(a, { type: 'system', title: 'Neues Feedback', body: `${user!.name}: ${String(text).slice(0, 80)}`, link: `/feedback?focus=${id}` });
   }
   return { status: 201, data: { id } };
 });
@@ -3217,7 +3219,7 @@ on('PATCH', '/feedback/:id', true, ({ params, user, body }) => {
   if (response !== undefined && response !== null) fb.response = response;
   fb.updated_at = now();
   if (fb.user_id && response && response !== oldResponse) {
-    notify(fb.user_id, { type: 'system', title: 'Antwort auf dein Feedback', body: String(response).slice(0, 80), link: '/feedback' });
+    notify(fb.user_id, { type: 'system', title: 'Antwort auf dein Feedback', body: String(response).slice(0, 80), link: `/feedback?focus=${fb.id}` });
   }
   return { feedback: { ...fb } };
 });

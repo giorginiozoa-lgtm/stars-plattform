@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { useI18n, lx, trx } from '../i18n';
-import { Avatar, Spinner, TagPill, timeAgo } from '../components';
+import { Avatar, Spinner, TagPill, timeAgo, useFocusTarget } from '../components';
 import type { IntroRequest, IntroSuggestion, IntroStatus, Tag } from '../types';
 
 const STATUS: Record<IntroStatus, { de: string; en: string; cls: string }> = {
@@ -106,7 +106,7 @@ function IntroCard({ intro, reload }: { intro: IntroRequest; reload: () => void 
   const st = STATUS[intro.status];
   const iAmSupporter = intro.supporter_id === user!.id;
   return (
-    <div className="card">
+    <div className="card" data-focus={intro.id}>
       <div className="flex items-center gap-sm">
         <Avatar name={intro.requester_name} seed={intro.requester_avatar || undefined} size="sm" />
         <div style={{ minWidth: 0 }}>
@@ -158,6 +158,7 @@ export default function Network() {
     load();
     api.get<{ tags: Tag[] }>('/tags').then((r) => setTags(r.tags));
   }, []);
+  useFocusTarget(intros);
 
   if (!intros) return <Spinner />;
   const isAdmin = user!.role === 'admin';

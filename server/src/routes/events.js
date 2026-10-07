@@ -39,7 +39,7 @@ router.post('/:id/register', (req, res) => {
   ).run(ev.id, req.user.id, scholarship ? 1 : 0, motivation || null, status);
   if (scholarship) {
     for (const a of db.prepare(`SELECT id FROM users WHERE role = 'admin'`).all()) {
-      notify(a.id, { type: 'system', title: 'Antrag auf Förderplatz', body: `${req.user.name}: ${ev.title_de}`, link: '/events' });
+      notify(a.id, { type: 'system', title: 'Antrag auf Förderplatz', body: `${req.user.name}: ${ev.title_de}`, link: `/events?focus=reg-${ev.id}-${req.user.id}` });
     }
   }
   res.json({ ok: true, status });
@@ -75,7 +75,7 @@ router.post('/registrations/:eventId/:userId/decide', (req, res) => {
     status, reg.event_id, reg.user_id
   );
   const label = { granted: 'gewährt', waitlist: 'auf der Warteliste', declined: 'abgelehnt' }[status];
-  notify(reg.user_id, { type: 'system', title: `Förderplatz ${label}`, body: reg.title_de, link: '/events' });
+  notify(reg.user_id, { type: 'system', title: `Förderplatz ${label}`, body: reg.title_de, link: `/events?focus=ev-${reg.event_id}` });
   res.json({ ok: true });
 });
 

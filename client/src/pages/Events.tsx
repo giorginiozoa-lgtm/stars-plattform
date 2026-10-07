@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { useI18n, dateLocale, lx, trx } from '../i18n';
-import { Avatar, Spinner } from '../components';
+import { Avatar, Spinner, useFocusTarget } from '../components';
 import type { EventRegistration, StarsEvent } from '../types';
 
 const KIND: Record<StarsEvent['kind'], { de: string; en: string }> = {
@@ -33,7 +33,7 @@ function EventCard({ e, reload }: { e: StarsEvent; reload: () => void }) {
   const [motivation, setMotivation] = useState(e.my_motivation || '');
   const isAdmin = user!.role === 'admin';
   return (
-    <div className="card">
+    <div className="card" data-focus={`ev-${e.id}`}>
       <div className="flex items-center gap-sm">
         <span className="badge badge-stage">{lx(KIND[e.kind])}</span>
         {e.my_status && <span className={`badge ${REG[e.my_status].cls} right`}>{lx(REG[e.my_status])}</span>}
@@ -67,13 +67,14 @@ function AdminRequests() {
   const [regs, setRegs] = useState<EventRegistration[] | null>(null);
   const load = async () => setRegs((await api.get<{ registrations: EventRegistration[] }>('/events/registrations')).registrations);
   useEffect(() => { load(); }, []);
+  useFocusTarget(regs);
   if (!regs) return <Spinner />;
   return (
     <div className="card mt">
       <h3>{tx('Interesse und Förderanträge', 'Interest and scholarship requests')}</h3>
       {regs.length === 0 && <p className="muted">{tx('Noch keine Anmeldungen.', 'No registrations yet.')}</p>}
       {regs.map((r) => (
-        <div key={`${r.event_id}-${r.user_id}`} className="list-item">
+        <div key={`${r.event_id}-${r.user_id}`} className="list-item" data-focus={`reg-${r.event_id}-${r.user_id}`}>
           <Avatar name={r.name} seed={r.avatar_seed || undefined} size="sm" />
           <div className="grow">
             <b>{r.name}</b> <small className="muted">{r.country} · {loc(r, 'title')}</small>
@@ -104,6 +105,7 @@ export default function Events() {
   const [n, setN] = useState(0);
   const load = async () => { setEvents((await api.get<{ events: StarsEvent[] }>('/events')).events); setN((x) => x + 1); };
   useEffect(() => { load(); }, []);
+  useFocusTarget(events);
   if (!events) return <Spinner />;
   return (
     <div>

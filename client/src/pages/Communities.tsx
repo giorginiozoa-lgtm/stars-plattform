@@ -5,7 +5,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { useI18n, dateLocale, lx, trx } from '../i18n';
-import { Avatar, RoleBadge, Spinner, timeAgo } from '../components';
+import { Avatar, RoleBadge, Spinner, timeAgo, useFocusTarget } from '../components';
 import type { Community, CommunitySession, CommunityPost, Role, Tag, SessionRequest } from '../types';
 
 const SESSION_FORMAT: Record<string, { de: string; en: string }> = {
@@ -155,7 +155,7 @@ function SlotRequests({ communityId, d, reload }: { communityId: string; d: Deta
         </form>
       )}
       {reqs.map((r) => (
-        <div key={r.id} className="list-item">
+        <div key={r.id} className="list-item" data-focus={`req-${r.id}`}>
           <Avatar name={r.requester_name} seed={r.requester_avatar || undefined} size="sm" />
           <div className="grow">
             <b>{r.title}</b> <span className={`badge ${r.status === 'approved' ? 'badge-resolved' : r.status === 'pending' ? 'badge-gold' : ''}`}>{lx(REQ_STATUS[r.status])}</span>
@@ -193,6 +193,7 @@ export function CommunityDetail() {
     setD(await api.get<DetailResp>(`/communities/${id}`));
   }
   useEffect(() => { load(); }, [id]);
+  useFocusTarget(d);
 
   if (!d) return <Spinner />;
   const c = d.community;
@@ -239,7 +240,7 @@ export function CommunityDetail() {
             )}
             {upcoming.length === 0 && <p className="muted">{tx('Keine geplanten Sessions.', 'No upcoming sessions.')}</p>}
             {upcoming.map((s) => (
-              <div key={s.id} className="list-item">
+              <div key={s.id} className="list-item" data-focus={`session-${s.id}`}>
                 <div className="date-chip">{fmtDate(s.starts_at, locale)}</div>
                 <div className="grow">
                   <b>{s.title}</b> <span className="badge">{lx(SESSION_FORMAT[s.format])}</span>

@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 import { useI18n, lx, trx } from '../i18n';
-import { Avatar, Spinner, timeAgo } from '../components';
+import { Avatar, Spinner, timeAgo, useFocusTarget } from '../components';
 import type { Role } from '../types';
 
 interface Account {
@@ -34,6 +34,7 @@ export default function Registrations() {
 
   const load = async () => setUsers((await api.get<{ users: Account[] }>('/users')).users);
   useEffect(() => { load(); }, []);
+  useFocusTarget(users);
 
   async function setStatus(u: Account, status: Account['status']) {
     await api.post(`/users/${u.id}/status`, { status, role: roles[u.id] ?? u.role });
@@ -61,7 +62,7 @@ export default function Registrations() {
         <h3>{tx('Zur Freigabe', 'Awaiting approval')} ({pending.length})</h3>
         {pending.length === 0 && <p className="muted">{tx('Keine offenen Registrierungen.', 'No pending registrations.')}</p>}
         {pending.map((u) => (
-          <div key={u.id} className="list-item">
+          <div key={u.id} className="list-item" data-focus={u.id}>
             <Avatar name={u.name} size="sm" />
             <div className="grow">
               <b>{u.name}</b> <small className="muted">{u.email} · {timeAgo(u.created_at, locale)}</small>
@@ -86,7 +87,7 @@ export default function Registrations() {
           <input className="right" style={{ maxWidth: 260 }} value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={tx('Suchen …', 'Search …')} />
         </div>
         {others.map((u) => (
-          <div key={u.id} className="list-item">
+          <div key={u.id} className="list-item" data-focus={u.id}>
             <Avatar name={u.name} size="sm" />
             <div className="grow">
               <b>{u.name}</b> <small className="muted">{u.email} · {t('role.' + u.role)}</small>

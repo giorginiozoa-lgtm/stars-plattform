@@ -1,4 +1,6 @@
 // Kleine, wiederverwendbare Praesentationskomponenten.
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useI18n, LANGUAGES } from './i18n';
 import type { Tag, Role } from './types';
 
@@ -73,4 +75,23 @@ export function LanguageToggle() {
       {LANGUAGES.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
     </select>
   );
+}
+
+// Deep-Link aus Benachrichtigungen: ?focus=<id> scrollt zum Element mit
+// data-focus="<id>" und hebt es kurz hervor, sobald die Daten geladen sind.
+export function useFocusTarget(ready: unknown) {
+  const { search } = useLocation();
+  useEffect(() => {
+    const f = new URLSearchParams(search).get('focus');
+    if (!f || !ready) return;
+    const t = setTimeout(() => {
+      const el = document.querySelector(`[data-focus="${CSS.escape(f)}"]`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.remove('focus-flash');
+      void (el as HTMLElement).offsetWidth; // Animation neu starten
+      el.classList.add('focus-flash');
+    }, 60);
+    return () => clearTimeout(t);
+  }, [search, ready]);
 }

@@ -6,7 +6,7 @@ import { useSearchParams } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { useI18n, lx, trx } from '../i18n';
-import { Spinner, timeAgo } from '../components';
+import { Spinner, timeAgo, useFocusTarget } from '../components';
 import { FEEDBACK_EMAIL, ISSUES_URL, isDemo } from '../config';
 import type { FeedbackCategory, FeedbackEntry } from '../types';
 
@@ -65,6 +65,7 @@ export default function Feedback() {
 
   const load = async () => setList((await api.get<{ feedback: FeedbackEntry[] }>('/feedback')).feedback);
   useEffect(() => { load(); }, []);
+  useFocusTarget(list);
 
   const mailBody = `${CATS[f.category].de}${f.area ? ` · ${f.area}` : ''}${f.rating ? ` · ${f.rating}/5` : ''}\n${tx('Seite', 'Page')}: ${from || '-'}\n${tx('Rolle', 'Role')}: ${user!.role}\n\n${f.body}`;
   const subject = `stars-Plattform Feedback: ${CATS[f.category].de}`;
@@ -164,7 +165,7 @@ export default function Feedback() {
       </div>
       {shown.length === 0 && <p className="muted">{tx('Noch kein Feedback.', 'No feedback yet.')}</p>}
       {shown.map((x) => (
-        <div key={x.id} className="card mt-sm">
+        <div key={x.id} className="card mt-sm" data-focus={x.id}>
           <div className="flex items-center gap-sm wrap">
             <span className="badge">{CATS[x.category].ico} {lx(CATS[x.category])}</span>
             {x.area && <span className="badge badge-domain">{x.area}</span>}

@@ -68,7 +68,7 @@ router.post('/', (req, res) => {
     return introId;
   });
   for (const a of db.prepare(`SELECT id FROM users WHERE role = 'admin'`).all()) {
-    notify(a.id, { type: 'system', title: 'Neue Intro-Anfrage', body: `${req.user.name}: ${target_profile}`, link: '/network' });
+    notify(a.id, { type: 'system', title: 'Neue Intro-Anfrage', body: `${req.user.name}: ${target_profile}`, link: `/network?focus=${id}` });
   }
   res.status(201).json({ id });
 });
@@ -134,9 +134,9 @@ router.post('/:id/propose', (req, res) => {
        updated_at = datetime('now') WHERE id = ?`
   ).run(supporter.id, vouch_note, intro.id);
   notify(supporter.id, {
-    type: 'match', title: `stars möchte dich ${intro.requester_name} vorstellen`, body: intro.target_profile, link: '/network',
+    type: 'match', title: `stars möchte dich ${intro.requester_name} vorstellen`, body: intro.target_profile, link: `/network?focus=${intro.id}`,
   });
-  notify(intro.requester_id, { type: 'system', title: 'Deine Intro-Anfrage ist in Bearbeitung', body: `Vorgeschlagen: ${supporter.name}`, link: '/network' });
+  notify(intro.requester_id, { type: 'system', title: 'Deine Intro-Anfrage ist in Bearbeitung', body: `Vorgeschlagen: ${supporter.name}`, link: `/network?focus=${intro.id}` });
   res.json({ intro: load(intro.id) });
 });
 
@@ -152,7 +152,7 @@ router.post('/:id/respond', (req, res) => {
       `UPDATE intro_requests SET status = 'declined', response_note = ?, updated_at = datetime('now') WHERE id = ?`
     ).run(note || null, intro.id);
     for (const a of db.prepare(`SELECT id FROM users WHERE role = 'admin'`).all()) {
-      notify(a.id, { type: 'system', title: 'Vorstellung abgelehnt', body: `${req.user.name} → ${intro.requester_name}`, link: '/network' });
+      notify(a.id, { type: 'system', title: 'Vorstellung abgelehnt', body: `${req.user.name} → ${intro.requester_name}`, link: `/network?focus=${intro.id}` });
     }
     return res.json({ intro: load(intro.id) });
   }
@@ -184,7 +184,7 @@ router.post('/:id/close', (req, res) => {
   db.prepare(
     `UPDATE intro_requests SET status = 'closed', response_note = COALESCE(?, response_note), updated_at = datetime('now') WHERE id = ?`
   ).run(note || null, intro.id);
-  notify(intro.requester_id, { type: 'system', title: 'Intro-Anfrage abgeschlossen', body: note || intro.target_profile, link: '/network' });
+  notify(intro.requester_id, { type: 'system', title: 'Intro-Anfrage abgeschlossen', body: note || intro.target_profile, link: `/network?focus=${intro.id}` });
   res.json({ intro: load(intro.id) });
 });
 

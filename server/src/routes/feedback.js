@@ -35,7 +35,7 @@ router.post('/', (req, res) => {
     .prepare('INSERT INTO feedback (user_id, category, area, rating, body, page) VALUES (?, ?, ?, ?, ?, ?)')
     .run(req.user.id, category, area || null, r, String(body).slice(0, 5000), page ? String(page).slice(0, 200) : null);
   for (const a of db.prepare(`SELECT id FROM users WHERE role = 'admin' AND id != ?`).all(req.user.id)) {
-    notify(a.id, { type: 'system', title: 'Neues Feedback', body: `${req.user.name}: ${String(body).slice(0, 80)}`, link: '/feedback' });
+    notify(a.id, { type: 'system', title: 'Neues Feedback', body: `${req.user.name}: ${String(body).slice(0, 80)}`, link: `/feedback?focus=${info.lastInsertRowid}` });
   }
   res.status(201).json({ id: Number(info.lastInsertRowid) });
 });
@@ -50,7 +50,7 @@ router.patch('/:id', (req, res) => {
     `UPDATE feedback SET status = COALESCE(?, status), response = COALESCE(?, response), updated_at = datetime('now') WHERE id = ?`
   ).run(status || null, response ?? null, fb.id);
   if (fb.user_id && response && response !== fb.response) {
-    notify(fb.user_id, { type: 'system', title: 'Antwort auf dein Feedback', body: String(response).slice(0, 80), link: '/feedback' });
+    notify(fb.user_id, { type: 'system', title: 'Antwort auf dein Feedback', body: String(response).slice(0, 80), link: `/feedback?focus=${fb.id}` });
   }
   res.json({ feedback: db.prepare('SELECT * FROM feedback WHERE id = ?').get(fb.id) });
 });

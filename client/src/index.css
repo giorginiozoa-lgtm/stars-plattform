@@ -343,6 +343,10 @@ textarea { resize: vertical; min-height: 90px; }
 [dir='rtl'] .right { margin-left: 0; margin-right: auto; }
 [dir='rtl'] .sidebar nav a .ico { margin-right: 0; margin-left: .55rem; }
 
+/* Ziel eines Deep-Links (Benachrichtigung) kurz hervorheben */
+@keyframes focus-flash { 0%, 60% { box-shadow: 0 0 0 3px var(--gold), 0 6px 18px rgba(245,179,1,.35); } 100% { box-shadow: none; } }
+.focus-flash { animation: focus-flash 2.8s ease-out; border-radius: var(--radius-sm); }
+
 /* KPI-Dashboard: Diagramme, Tooltip, Tabellenansicht */
 .chart-wrap { position: relative; }
 .chart-wrap svg { display: block; overflow: visible; }

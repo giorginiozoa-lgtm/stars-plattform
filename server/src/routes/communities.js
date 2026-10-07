@@ -134,12 +134,12 @@ router.post('/:id/sessions', (req, res) => {
   const { title, description, format, starts_at } = req.body || {};
   if (!title || !starts_at) return res.status(400).json({ error: 'title und starts_at erforderlich' });
   const fmt = FORMATS.includes(format) ? format : 'peer_session';
-  db.prepare(
+  const sInfo = db.prepare(
     `INSERT INTO community_sessions (community_id, host_id, title, description, format, starts_at) VALUES (?, ?, ?, ?, ?, ?)`
   ).run(id, req.user.id, title, description || null, fmt, String(starts_at).replace('T', ' ').slice(0, 16));
   const community = db.prepare('SELECT name_de FROM communities WHERE id = ?').get(id);
   for (const m of db.prepare('SELECT user_id FROM community_members WHERE community_id = ? AND user_id != ?').all(id, req.user.id)) {
-    notify(m.user_id, { type: 'system', title: `Neue Session: ${title}`, body: community?.name_de, link: `/communities/${id}` });
+    notify(m.user_id, { type: 'system', title: `Neue Session: ${title}`, body: community?.name_de, link: `/communities/${id}?focus=session-${sInfo.lastInsertRowid}` });
   }
   res.status(201).json({ ok: true });
 });
@@ -167,13 +167,13 @@ router.post('/:id/session-requests', (req, res) => {
     return res.status(403).json({ error: 'Nur Mitglieder können einen Slot beantragen' });
   const { title, description, audience, preferred_date } = req.body || {};
   if (!title) return res.status(400).json({ error: 'title erforderlich' });
-  db.prepare(
+  const rInfo = db.prepare(
     `INSERT INTO session_requests (community_id, requester_id, title, description, audience, preferred_date) VALUES (?, ?, ?, ?, ?, ?)`
   ).run(id, req.user.id, title, description || null, audience || null, preferred_date || null);
   const mods = db.prepare(`SELECT user_id FROM community_members WHERE community_id = ? AND role = 'moderator'`).all(id);
   for (const m of mods) {
     if (m.user_id !== req.user.id)
-      notify(m.user_id, { type: 'system', title: `Slot-Antrag: ${title}`, body: req.user.name, link: `/communities/${id}` });
+      notify(m.user_id, { type: 'system', title: `Slot-Antrag: ${title}`, body: req.user.name, link: `/communities/${id}?focus=req-${rInfo.lastInsertRowid}` });
   }
   res.status(201).json({ ok: true });
 });
@@ -186,7 +186,7 @@ router.post('/session-requests/:rid/decide', (req, res) => {
   const { approve, starts_at, format } = req.body || {};
   if (!approve) {
     db.prepare(`UPDATE session_requests SET status = 'declined' WHERE id = ?`).run(r.id);
-    notify(r.requester_id, { type: 'system', title: `Slot-Antrag abgelehnt: ${r.title}`, link: `/communities/${r.community_id}` });
+    notify(r.requester_id, { type: 'system', title: `Slot-Antrag abgelehnt: ${r.title}`, link: `/communities/${r.community_id}?focus=req-${r.id}` });
     return res.json({ ok: true });
   }
   if (!starts_at) return res.status(400).json({ error: 'starts_at erforderlich' });
@@ -209,7 +209,7 @@ router.post('/session-requests/:rid/decide', (req, res) => {
     notify(m.user_id, {
       type: 'system',
       title: m.user_id === r.requester_id ? `Dein Slot ist bestätigt: ${r.title}` : `Neue Session: ${r.title}`,
-      link: `/communities/${r.community_id}`,
+      link: `/communities/${r.community_id}?focus=session-${sessionId}`,
     });
   }
   res.json({ ok: true, session_id: sessionId });

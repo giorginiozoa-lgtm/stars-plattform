@@ -47,7 +47,7 @@ router.post('/register', (req, res) => {
     for (const a of db.prepare(`SELECT id FROM users WHERE role = 'admin'`).all()) {
       notify(a.id, {
         type: 'system', title: 'Neue Registrierung zur Freigabe',
-        body: `${name} (${role === 'mentor' ? 'Expert:in' : 'Entrepreneur:in'})`, link: '/registrations',
+        body: `${name} (${role === 'mentor' ? 'Expert:in' : 'Entrepreneur:in'})`, link: `/registrations?focus=${user.id}`,
       });
     }
     return res.status(202).json({ pending: true, message: statusMessage('pending') });

@@ -805,8 +805,8 @@ const i2 = Number(insIntro.run(E('omar.haddad@example.com'), 'Investor:in mit Er
   'Feedback zum Pitch und Einschätzung der Finanzierungsstrategie vor der ersten Runde.', 'proposed', M('anna.keller@example.com'),
   'Omar ist seit einem Monat Fellow; sein Team hat eine funktionierende Lernplattform mit zahlenden Schulen. stars kennt ihn aus dem Aufnahmegespräch und empfiehlt ein kurzes Kennenlernen.', '-5 days', '-1 days').lastInsertRowid);
 for (const t of ['financing', 'net-investors', 'market-mena']) insIntroTag.run(i2, tagId[t]);
-insNotif.run(M('anna.keller@example.com'), 'match', 'stars möchte dich Omar Haddad vorstellen', 'Investor:in mit Erfahrung in EdTech im MENA-Raum', '/network', '-1 days');
-insNotif.run(admin, 'system', 'Neue Intro-Anfrage', 'Sunita Rai: Alumni in Stiftungen/CSR mit Bildungsfokus', '/network', '-2 days');
+insNotif.run(M('anna.keller@example.com'), 'match', 'stars möchte dich Omar Haddad vorstellen', 'Investor:in mit Erfahrung in EdTech im MENA-Raum', `/network?focus=${i2}`, '-1 days');
+insNotif.run(admin, 'system', 'Neue Intro-Anfrage', 'Sunita Rai: Alumni in Stiftungen/CSR mit Bildungsfokus', `/network?focus=${i1}`, '-2 days');
 
 // Veranstaltungen von stars (Termine gemaess stars, Stand Oktober 2026).
 const insEv = db.prepare(
@@ -830,7 +830,7 @@ const insReg = db.prepare(
 insReg.run(ev['singapore-2027'], sunita, 1, 'Ohne Firmensponsoring kann ich die Teilnahme nicht finanzieren. Das Symposium wäre der Zugang zu Partnern für den Aufbau einer Unternehmensbasis in Singapur.', 'requested', '-3 days');
 insReg.run(ev['india-2027'], E('amara.okafor@example.com'), 0, null, 'interested', '-6 days');
 insReg.run(ev['india-2027'], E('ravi.patel@example.com'), 1, 'Austausch mit indischen HealthTech-Unternehmen und potenziellen Partnern vor Ort.', 'waitlist', '-9 days');
-insNotif.run(admin, 'system', 'Antrag auf Förderplatz', 'Sunita Rai: stars Singapore Symposium', '/events', '-3 days');
+insNotif.run(admin, 'system', 'Antrag auf Förderplatz', 'Sunita Rai: stars Singapore Symposium', `/events?focus=reg-${ev['singapore-2027']}-${sunita}`, '-3 days');
 console.log('  Iteration 3: 4 Alumni, 1 Persona-Fall, Online Alumni Chapter, 2 Intro-Anfragen, 4 Veranstaltungen');
 
 // ---------------------------------------------------------------------------
