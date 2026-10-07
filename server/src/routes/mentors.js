@@ -11,7 +11,7 @@ const router = Router();
 router.get('/', authRequired, (req, res) => {
   const { tag } = req.query;
   let mentors = db
-    .prepare(`SELECT * FROM users WHERE role = 'mentor' OR (role = 'entrepreneur' AND offers_peer_support = 1) ORDER BY role DESC, name`)
+    .prepare(`SELECT * FROM users WHERE status = 'active' AND (role = 'mentor' OR (role = 'entrepreneur' AND offers_peer_support = 1)) ORDER BY role DESC, name`)
     .all();
   let list = mentors.map((m) => ({ ...publicUser(m), tags: userTags(m.id) }));
   if (tag) {

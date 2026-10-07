@@ -2,6 +2,7 @@
 // Abhaengigkeit) und JSON-Web-Tokens fuer die zustandslose Session.
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import jwt from 'jsonwebtoken';
+import { db } from './db.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'stars-mvp-dev-secret-change-me';
 const TOKEN_TTL = '7d';
@@ -37,10 +38,15 @@ export function authRequired(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Nicht authentifiziert' });
   try {
     req.user = jwt.verify(token, JWT_SECRET);
-    next();
   } catch {
     return res.status(401).json({ error: 'Token ungültig oder abgelaufen' });
   }
+  // Nur freigegebene Konten duerfen die Plattform nutzen; der Status wird bei
+  // jeder Anfrage geprueft, damit eine Sperre sofort wirkt.
+  const row = db.prepare('SELECT status FROM users WHERE id = ?').get(req.user.id);
+  if (!row) return res.status(401).json({ error: 'Konto nicht gefunden' });
+  if (row.status !== 'active') return res.status(403).json({ error: statusMessage(row.status), code: row.status });
+  next();
 }
 
 // Rollenbasierte Zugriffskontrolle (z.B. nur Admin fuer bestimmte Endpunkte).
@@ -51,4 +57,10 @@ export function requireRole(...roles) {
     }
     next();
   };
+}
+
+export function statusMessage(status) {
+  return status === 'pending'
+    ? 'Dein Konto wartet noch auf die Freigabe durch stars.'
+    : 'Dein Konto wurde nicht freigegeben. Bitte wende dich an stars.';
 }

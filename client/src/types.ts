@@ -15,6 +15,7 @@ export interface User {
   capacity_hours?: number | null;
   available?: boolean;
   offers_peer_support?: boolean;
+  status?: 'pending' | 'active' | 'rejected';
 }
 
 export interface Tag {

@@ -84,7 +84,7 @@ export function rankMentors(questionId, limit = 5) {
     .all(questionId);
 
   const mentors = db
-    .prepare(`SELECT id, name, country, region, headline, avatar_seed FROM users WHERE role = 'mentor'`)
+    .prepare(`SELECT id, name, country, region, headline, avatar_seed FROM users WHERE role = 'mentor' AND status = 'active'`)
     .all();
 
   const tagName = new Map(questionTags.map((t) => [t.id, { de: t.name_de, en: t.name_en }]));
@@ -245,7 +245,7 @@ export function rankSupporters(needId, limit = 6) {
     .prepare(
       `SELECT id, name, country, region, headline, avatar_seed, languages,
               support_roles, capacity_hours, available
-       FROM users WHERE role = 'mentor' AND id != ?`
+       FROM users WHERE role = 'mentor' AND status = 'active' AND id != ?`
     )
     .all(need.eem_id);
   const tagStmt = db.prepare(

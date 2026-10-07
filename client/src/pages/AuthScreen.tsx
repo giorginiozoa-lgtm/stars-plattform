@@ -9,8 +9,9 @@ export default function AuthScreen() {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [info, setInfo] = useState('');
   const [form, setForm] = useState({
-    email: '', password: '', name: '', role: 'entrepreneur', country: '', headline: '',
+    email: '', password: '', name: '', role: 'entrepreneur', country: '', headline: '', signup_note: '',
   });
 
   const set = (k: string) => (e: any) => setForm({ ...form, [k]: e.target.value });
@@ -18,10 +19,18 @@ export default function AuthScreen() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    setInfo('');
     setBusy(true);
     try {
       if (mode === 'login') await login(form.email, form.password);
-      else await register(form);
+      else {
+        const r = await register(form);
+        if (r.pending) {
+          setInfo(t('auth.pendingInfo'));
+          setMode('login');
+          setForm({ ...form, password: '' });
+        }
+      }
     } catch (err: any) {
       setError(err.message || 'Fehler');
     } finally {
@@ -77,6 +86,10 @@ export default function AuthScreen() {
                   <input value={form.headline} onChange={set('headline')} />
                 </div>
               </div>
+              <div className="field">
+                <label>{t('auth.signupNote')}</label>
+                <textarea rows={2} value={form.signup_note} onChange={set('signup_note')} required placeholder={t('auth.signupNoteHint')} />
+              </div>
             </>
           )}
 
@@ -89,6 +102,7 @@ export default function AuthScreen() {
             <input type="password" value={form.password} onChange={set('password')} required />
           </div>
 
+          {info && <div className="notice">{info}</div>}
           {error && <div className="error">{error}</div>}
 
           <button className="btn-gold btn-block" disabled={busy} type="submit">
@@ -96,7 +110,7 @@ export default function AuthScreen() {
           </button>
 
           <p className="mt-sm" style={{ textAlign: 'center', margin: '.8rem 0 0' }}>
-            <a href="#" onClick={(e) => { e.preventDefault(); setMode(mode === 'login' ? 'register' : 'login'); setError(''); }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); setMode(mode === 'login' ? 'register' : 'login'); setError(''); setInfo(''); }}>
               {mode === 'login' ? t('auth.noAccount') + ' ' + t('auth.register') : t('auth.hasAccount') + ' ' + t('auth.login')}
             </a>
           </p>

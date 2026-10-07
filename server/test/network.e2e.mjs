@@ -109,5 +109,31 @@ check('Antwort fuer Absenderin sichtbar', r.data.feedback.find((f) => f.id === f
 r = await call(admin, 'GET', '/dashboard');
 check('Dashboard zeigt Netzwerk-Kennzahlen', typeof r.data.network?.feedback_new === 'number');
 
+// --- Freigabe neuer Registrierungen -----------------------------------------
+const neu = { email: `neu${Date.now()}@test.ch`, password: 'geheim', name: 'Neu Test', role: 'entrepreneur', signup_note: 'Fellow 2026' };
+r = await call(null, 'POST', '/auth/register', neu);
+check('Registrierung wartet auf Freigabe', r.status === 202 && r.data.pending === true && !r.data.token);
+r = await call(null, 'POST', '/auth/login', { email: neu.email, password: neu.password });
+check('Login vor Freigabe gesperrt', r.status === 403 && r.data.code === 'pending');
+r = await call(sunita, 'GET', '/users');
+check('Nur stars sieht Registrierungen', r.status === 403);
+r = await call(admin, 'GET', '/users');
+const pendingUser = r.data.users?.find((u) => u.email === neu.email);
+check('stars sieht offene Registrierung mit Notiz', pendingUser?.status === 'pending' && pendingUser.signup_note === 'Fellow 2026');
+r = await call(admin, 'GET', '/dashboard');
+check('Dashboard zaehlt offene Registrierungen', r.data.network?.registrations_pending >= 1);
+r = await call(admin, 'POST', `/users/${pendingUser.id}/status`, { status: 'active' });
+check('stars gibt frei', r.data.ok === true);
+r = await call(null, 'POST', '/auth/login', { email: neu.email, password: neu.password });
+const neuToken = r.data.token;
+check('Login nach Freigabe', !!neuToken);
+r = await call(neuToken, 'GET', '/forums');
+check('Freigegebenes Konto sieht Foren', r.data.forums?.length === 5);
+await call(admin, 'POST', `/users/${pendingUser.id}/status`, { status: 'rejected' });
+r = await call(neuToken, 'GET', '/dashboard');
+check('Sperre wirkt sofort auch auf bestehendes Token', r.status === 403);
+r = await call(amara, 'GET', '/mentors');
+check('Gesperrte Konten nicht im Verzeichnis', !r.data.mentors.some((m) => m.name === 'Neu Test'));
+
 console.log(fails ? `\n${fails} Fehler` : '\nAlle Tests bestanden');
 process.exit(fails ? 1 : 0);

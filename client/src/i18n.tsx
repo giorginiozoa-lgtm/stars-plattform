@@ -36,6 +36,10 @@ const dict: Record<string, { de: string; en: string }> = {
   'auth.demoHint': { de: 'Demo-Login (Passwort: stars1234):', en: 'Demo login (password: stars1234):' },
   'auth.welcome': { de: 'Willkommen zurück', en: 'Welcome back' },
   'auth.createAccount': { de: 'Konto erstellen', en: 'Create account' },
+  'auth.signupNote': { de: 'Dein Bezug zu stars', en: 'Your connection to stars' },
+  'auth.signupNoteHint': { de: 'z. B. Fellow 2026, Alumni-Jahrgang, eingeladen von …', en: 'e.g. fellow 2026, alumni class, invited by …' },
+  'auth.pendingInfo': { de: 'Danke für deine Registrierung! stars prüft dein Konto und gibt es frei. Danach kannst du dich hier anmelden.', en: 'Thanks for signing up! stars will review and approve your account. You can then log in here.' },
+  'nav.registrations': { de: 'Registrierungen', en: 'Registrations' },
 
   'common.loading': { de: 'Lädt …', en: 'Loading …' },
   'common.save': { de: 'Speichern', en: 'Save' },

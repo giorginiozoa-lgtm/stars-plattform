@@ -130,6 +130,7 @@ export default function Dashboard() {
             <Link to="/events"><Kpi num={data.network.scholarship_requests} label={tx('Offene Förderanträge', 'Open scholarship requests')} accent={data.network.scholarship_requests > 0} /></Link>
             <Link to="/communities"><Kpi num={data.network.session_requests} label={tx('Offene Slot-Anträge', 'Open slot requests')} /></Link>
             <Kpi num={data.network.peer_experts} label={tx('Peer-Expert:innen', 'Peer experts')} />
+            <Link to="/registrations"><Kpi num={data.network.registrations_pending ?? 0} label={tx('Offene Registrierungen', 'Pending registrations')} accent={(data.network.registrations_pending ?? 0) > 0} /></Link>
             <Link to="/feedback"><Kpi num={data.network.feedback_new} label={tx('Neues Feedback', 'New feedback')} accent={data.network.feedback_new > 0} /></Link>
           </div>
         </div>

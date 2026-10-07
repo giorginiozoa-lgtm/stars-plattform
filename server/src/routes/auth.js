@@ -1,13 +1,16 @@
 // Auth-Endpunkte: Registrierung, Login, aktuelles Profil, Tag-Zuordnung.
 import { Router } from 'express';
 import { db, withTx } from '../db.js';
-import { hashPassword, verifyPassword, signToken, authRequired } from '../auth.js';
-import { publicUser, userTags } from '../helpers.js';
+import { hashPassword, verifyPassword, signToken, authRequired, statusMessage } from '../auth.js';
+import { publicUser, userTags, notify } from '../helpers.js';
+
+// Neue Registrierungen muessen von stars freigegeben werden (abschaltbar fuer lokale Tests).
+const REQUIRE_APPROVAL = process.env.REQUIRE_APPROVAL !== 'false';
 
 const router = Router();
 
 router.post('/register', (req, res) => {
-  const { email, password, name, role, country, region, headline, bio, languages } = req.body || {};
+  const { email, password, name, role, country, region, headline, bio, languages, signup_note } = req.body || {};
   if (!email || !password || !name || !role) {
     return res.status(400).json({ error: 'email, password, name und role sind erforderlich' });
   }
@@ -21,8 +24,8 @@ router.post('/register', (req, res) => {
 
   const info = db
     .prepare(
-      `INSERT INTO users (email, password_hash, name, role, country, region, headline, bio, languages, avatar_seed)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO users (email, password_hash, name, role, country, region, headline, bio, languages, avatar_seed, status, signup_note)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     )
     .run(
       email,
@@ -34,10 +37,21 @@ router.post('/register', (req, res) => {
       headline || null,
       bio || null,
       Array.isArray(languages) ? languages.join(',') : languages || 'en',
-      name
+      name,
+      REQUIRE_APPROVAL ? 'pending' : 'active',
+      signup_note ? String(signup_note).slice(0, 1000) : null
     );
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(info.lastInsertRowid);
+  if (REQUIRE_APPROVAL) {
+    for (const a of db.prepare(`SELECT id FROM users WHERE role = 'admin'`).all()) {
+      notify(a.id, {
+        type: 'system', title: 'Neue Registrierung zur Freigabe',
+        body: `${name} (${role === 'mentor' ? 'Expert:in' : 'Entrepreneur:in'})`, link: '/registrations',
+      });
+    }
+    return res.status(202).json({ pending: true, message: statusMessage('pending') });
+  }
   res.status(201).json({ token: signToken(user), user: publicUser(user) });
 });
 
@@ -46,6 +60,9 @@ router.post('/login', (req, res) => {
   const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
   if (!user || !verifyPassword(password || '', user.password_hash)) {
     return res.status(401).json({ error: 'E-Mail oder Passwort falsch' });
+  }
+  if ((user.status || 'active') !== 'active') {
+    return res.status(403).json({ error: statusMessage(user.status), code: user.status });
   }
   res.json({ token: signToken(user), user: publicUser(user) });
 });

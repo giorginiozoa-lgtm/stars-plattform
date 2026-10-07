@@ -463,6 +463,10 @@ export function initSchema() {
   // Migration Iteration 2 -> 3: Peer-Expert:innen (FA-27) und neues
   // Session-Format «Pitch & Learn» (FA-24).
   addColumnIfMissing('users', 'offers_peer_support', 'INTEGER NOT NULL DEFAULT 0');
+  // Freigabe neuer Registrierungen durch stars (bestehende Konten bleiben aktiv).
+  addColumnIfMissing('users', 'status', "TEXT NOT NULL DEFAULT 'active'");  // 'pending' | 'active' | 'rejected'
+  addColumnIfMissing('users', 'signup_note', 'TEXT');                       // Bezug zu stars / Anliegen
+  addColumnIfMissing('users', 'reviewed_at', 'TEXT');
   extendSessionFormats();
 }
 

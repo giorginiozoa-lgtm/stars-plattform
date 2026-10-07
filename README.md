@@ -108,6 +108,11 @@ Aufruf dauert dann ca. 1 Minute. Für Testbetrieb gedacht, nicht für
 Produktivbetrieb. Vor Tests mit realen Personendaten Einwilligung einholen;
 Admin-Konten entstehen nie per Selbstregistrierung.
 
+**Freigabe neuer Konten:** Wer sich registriert, kann die Plattform erst nutzen,
+wenn stars das Konto unter **Registrierungen** (nur Admin) freigibt; dort lassen
+sich Konten auch ablehnen oder sperren. Für lokale Tests abschaltbar mit
+`REQUIRE_APPROVAL=false`.
+
 ---
 
 ## Technologie-Stack

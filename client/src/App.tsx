@@ -23,6 +23,7 @@ import Communities, { CommunityDetail } from './pages/Communities';
 import Network from './pages/Network';
 import Events from './pages/Events';
 import Feedback from './pages/Feedback';
+import Registrations from './pages/Registrations';
 
 function LanguageToggle() {
   const { locale, setLocale } = useI18n();
@@ -112,6 +113,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     { to: '/learning', ico: '🎓', label: t('nav.learning') },
     { to: '/profile', ico: '⚙', label: t('nav.profile') },
     { to: '/feedback', ico: '💡', label: t('nav.feedback') },
+    ...(user!.role === 'admin' ? [{ to: '/registrations', ico: '✔', label: t('nav.registrations') }] : []),
   ];
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
@@ -181,6 +183,7 @@ function Layout() {
             <Route path="/network" element={<Network />} />
             <Route path="/events" element={<Events />} />
             <Route path="/feedback" element={<Feedback />} />
+            <Route path="/registrations" element={<Registrations />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>

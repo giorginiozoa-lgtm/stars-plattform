@@ -110,6 +110,7 @@ router.get('/', authRequired, (req, res) => {
         session_requests: count(`SELECT COUNT(*) n FROM session_requests WHERE status = 'pending'`),
         peer_experts: count(`SELECT COUNT(*) n FROM users WHERE offers_peer_support = 1`),
         feedback_new: count(`SELECT COUNT(*) n FROM feedback WHERE status = 'new'`),
+        registrations_pending: count(`SELECT COUNT(*) n FROM users WHERE status = 'pending'`),
       },
     });
   }

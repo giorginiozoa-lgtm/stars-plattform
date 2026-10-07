@@ -995,6 +995,7 @@ function publicUser(u: Row | undefined | null) {
     capacity_hours: u.capacity_hours ?? null,
     available: u.available === undefined ? true : !!u.available,
     offers_peer_support: !!u.offers_peer_support,
+    status: u.status || 'active',
   };
 }
 
@@ -1076,7 +1077,7 @@ function rankMentors(questionId: number, limit = 5) {
   const tagName = new Map(qTags.map((t) => [t.id, { de: t.name_de, en: t.name_en }]));
 
   return S.users
-    .filter((u) => u.role === 'mentor' && u.id !== question.asker_id)
+    .filter((u) => u.role === 'mentor' && (u.status || 'active') === 'active' && u.id !== question.asker_id)
     .map((m) => {
       const mTags = S.user_tags
         .filter((ut) => ut.user_id === m.id)
@@ -1196,7 +1197,7 @@ function rankSupporters(needId: number, limit = 6) {
     }).length;
 
   return S.users
-    .filter((u) => u.role === 'mentor' && u.id !== c.eem_id)
+    .filter((u) => u.role === 'mentor' && (u.status || 'active') === 'active' && u.id !== c.eem_id)
     .map((s) => {
       const sup = {
         tags: S.user_tags
@@ -1406,6 +1407,11 @@ function signToken(user: Row): string {
   const payload = JSON.stringify({ id: user.id, role: user.role, name: user.name });
   return 'demo.' + btoa(String.fromCharCode(...new TextEncoder().encode(payload)));
 }
+function statusMessage(status: string) {
+  return status === 'pending'
+    ? 'Dein Konto wartet noch auf die Freigabe durch stars.'
+    : 'Dein Konto wurde nicht freigegeben. Bitte wende dich an stars.';
+}
 function verifyToken(token: string | null) {
   if (!token || !token.startsWith('demo.')) return null;
   try {
@@ -1426,7 +1432,7 @@ on('GET', '/health', false, () => ({ status: 'ok', ts: new Date().toISOString() 
 
 // --- auth ---
 on('POST', '/auth/register', false, ({ body }) => {
-  const { email, password, name, role, country, region, headline, bio, languages } = body || {};
+  const { email, password, name, role, country, region, headline, bio, languages, signup_note } = body || {};
   if (!email || !password || !name || !role) throw new HttpError(400, 'email, password, name und role sind erforderlich');
   // Admin-Konten entstehen nur ueber den Seed, nie per Selbstregistrierung.
   if (!['entrepreneur', 'mentor'].includes(role)) throw new HttpError(400, 'Ungültige Rolle');
@@ -1437,15 +1443,21 @@ on('POST', '/auth/register', false, ({ body }) => {
     country: country || null, region: region || null, headline: headline || null, bio: bio || null,
     languages: Array.isArray(languages) ? languages.join(',') : languages || 'en',
     avatar_seed: name, support_roles: null, capacity_hours: null, available: 1, offers_peer_support: 0, created_at: now(),
+    status: 'pending', signup_note: signup_note ? String(signup_note).slice(0, 1000) : null, reviewed_at: null,
   };
   S.users.push(user);
-  return { status: 201, data: { token: signToken(user), user: publicUser(user) } };
+  // Neue Registrierungen muessen von stars freigegeben werden.
+  for (const a of S.users.filter((x) => x.role === 'admin')) {
+    notify(a.id, { type: 'system', title: 'Neue Registrierung zur Freigabe', body: `${name} (${role === 'mentor' ? 'Expert:in' : 'Entrepreneur:in'})`, link: '/registrations' });
+  }
+  return { status: 202, data: { pending: true, message: statusMessage('pending') } };
 });
 
 on('POST', '/auth/login', false, ({ body }) => {
   const { email, password } = body || {};
   const user = S.users.find((u) => u.email === email);
   if (!user || user.password_hash !== (password || '')) throw new HttpError(401, 'E-Mail oder Passwort falsch');
+  if ((user.status || 'active') !== 'active') throw new HttpError(403, statusMessage(user.status), { code: user.status });
   return { token: signToken(user), user: publicUser(user) };
 });
 
@@ -1685,7 +1697,7 @@ on('GET', '/mentors', true, ({ query }) => {
   const tag = query.get('tag');
   // Seit Iteration 3 auch Entrepreneurs mit Opt-in (Peer-Expert:innen, FA-27); ORDER BY role DESC, name.
   let list = S.users
-    .filter((u) => u.role === 'mentor' || (u.role === 'entrepreneur' && u.offers_peer_support === 1))
+    .filter((u) => (u.status || 'active') === 'active' && (u.role === 'mentor' || (u.role === 'entrepreneur' && u.offers_peer_support === 1)))
     .sort((a, b) => cmp(b.role, a.role) || cmp(a.name, b.name))
     .map((m) => ({ ...publicUser(m)!, tags: userTags(m.id) }));
   if (tag) list = list.filter((m) => m.tags.some((t) => t.slug === tag));
@@ -1929,6 +1941,7 @@ on('GET', '/dashboard', true, ({ user }) => {
         session_requests: S.session_requests.filter((r) => r.status === 'pending').length,
         peer_experts: S.users.filter((u) => u.offers_peer_support === 1).length,
         feedback_new: S.feedback.filter((f) => f.status === 'new').length,
+        registrations_pending: S.users.filter((u) => u.status === 'pending').length,
       },
     };
   }
@@ -2849,7 +2862,7 @@ on('GET', '/intros/:id/suggestions', true, ({ params, user }) => {
   if (!intro) throw new HttpError(404, 'Anfrage nicht gefunden');
   const names = new Map(intro.tags.map((t: Row) => [t.id, { de: t.name_de, en: t.name_en }]));
   const suggestions = S.users
-    .filter((u) => u.id !== intro.requester_id && (u.role === 'mentor' || (u.role === 'entrepreneur' && u.offers_peer_support === 1)))
+    .filter((u) => u.id !== intro.requester_id && (u.status || 'active') === 'active' && (u.role === 'mentor' || (u.role === 'entrepreneur' && u.offers_peer_support === 1)))
     .map((u) => {
       const r = scoreSupporter(
         { tags: intro.tags, role: 'connector', language: null },
@@ -3022,6 +3035,33 @@ on('POST', '/events/registrations/:eventId/:userId/decide', true, ({ params, use
 const FEEDBACK_CATEGORIES = ['bug', 'idea', 'usability', 'praise', 'other'];
 const FEEDBACK_STATUSES = ['new', 'in_progress', 'done'];
 
+// --- Freigabe neuer Registrierungen (server/src/routes/users.js) ---
+on('GET', '/users', true, ({ user }) => {
+  if (user!.role !== 'admin') throw new HttpError(403, 'Keine Berechtigung');
+  const users = S.users
+    .map((u) => ({ id: u.id, email: u.email, name: u.name, role: u.role, country: u.country ?? null, headline: u.headline ?? null,
+      signup_note: u.signup_note ?? null, status: u.status || 'active', created_at: u.created_at, reviewed_at: u.reviewed_at ?? null }))
+    .sort((a, b) => Number(b.status === 'pending') - Number(a.status === 'pending') || cmp(b.created_at, a.created_at));
+  return { users };
+});
+
+on('POST', '/users/:id/status', true, ({ params, body, user }) => {
+  if (user!.role !== 'admin') throw new HttpError(403, 'Keine Berechtigung');
+  const { status, role } = body || {};
+  if (!['active', 'rejected', 'pending'].includes(status)) throw new HttpError(400, 'Ungültiger Status');
+  const u = findUser(Number(params.id));
+  if (!u) throw new HttpError(404, 'Konto nicht gefunden');
+  if (u.role === 'admin') throw new HttpError(400, 'Admin-Konten können hier nicht geändert werden');
+  const before = u.status || 'active';
+  u.status = status;
+  if (['entrepreneur', 'mentor'].includes(role)) u.role = role;
+  u.reviewed_at = now();
+  if (status === 'active' && before !== 'active') {
+    notify(u.id, { type: 'system', title: 'Willkommen bei stars!', body: 'Dein Konto wurde freigegeben. Tritt einer Community bei, um loszulegen.', link: '/communities' });
+  }
+  return { ok: true };
+});
+
 on('GET', '/feedback', true, ({ user }) => {
   const all = user!.role === 'admin';
   const feedback = S.feedback
@@ -3096,6 +3136,12 @@ async function handle(method: string, rawPath: string, init: RequestInit | undef
     const m = r.re.exec(pathname);
     if (!m) continue;
     if (r.auth && !user) return jsonResponse({ error: 'Nicht authentifiziert' }, 401);
+    if (r.auth) {
+      const acc = S.users.find((u) => u.id === user.id);
+      if (!acc) return jsonResponse({ error: 'Konto nicht gefunden' }, 401);
+      const st = acc.status || 'active';
+      if (st !== 'active') return jsonResponse({ error: statusMessage(st), code: st }, 403);
+    }
 
     const params: Record<string, string> = {};
     r.keys.forEach((k, i) => { params[k] = decodeURIComponent(m[i + 1]); });

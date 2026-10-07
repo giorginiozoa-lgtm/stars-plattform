@@ -87,7 +87,7 @@ router.get('/:id/suggestions', (req, res) => {
   if (!intro) return res.status(404).json({ error: 'Anfrage nicht gefunden' });
   const candidates = db
     .prepare(
-      `SELECT * FROM users WHERE id != ? AND (role = 'mentor' OR (role = 'entrepreneur' AND offers_peer_support = 1))`
+      `SELECT * FROM users WHERE id != ? AND status = 'active' AND (role = 'mentor' OR (role = 'entrepreneur' AND offers_peer_support = 1))`
     )
     .all(intro.requester_id);
   const tagStmt = db.prepare(

@@ -21,6 +21,7 @@ import communityRoutes from './routes/communities.js';
 import introRoutes from './routes/intros.js';
 import eventRoutes from './routes/events.js';
 import feedbackRoutes from './routes/feedback.js';
+import userRoutes from './routes/users.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +48,7 @@ app.use('/api/communities', communityRoutes);
 app.use('/api/intros', introRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/users', userRoutes);
 
 // In Produktion (nach `npm run build`) das gebaute Frontend ausliefern.
 const clientDist = join(__dirname, '..', '..', 'client', 'dist');

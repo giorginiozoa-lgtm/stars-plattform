@@ -18,6 +18,7 @@ export function publicUser(u) {
     capacity_hours: u.capacity_hours ?? null,
     available: u.available === undefined ? true : !!u.available,
     offers_peer_support: !!u.offers_peer_support,
+    status: u.status || 'active',
   };
 }
 

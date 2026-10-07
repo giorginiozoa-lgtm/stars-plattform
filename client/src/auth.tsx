@@ -7,7 +7,7 @@ interface AuthCtx {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: Record<string, unknown>) => Promise<void>;
+  register: (data: Record<string, unknown>) => Promise<{ pending: boolean; message?: string }>;
   logout: () => void;
   refresh: () => Promise<void>;
 }
@@ -48,10 +48,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user);
   }
 
+  // Neue Konten warten in der Regel auf die Freigabe durch stars (kein Token).
   async function register(data: Record<string, unknown>) {
-    const { token, user } = await api.post<{ token: string; user: User }>('/auth/register', data);
-    setToken(token);
-    setUser(user);
+    const r = await api.post<{ token?: string; user?: User; pending?: boolean; message?: string }>('/auth/register', data);
+    if (r.pending || !r.token) return { pending: true, message: r.message };
+    setToken(r.token);
+    setUser(r.user!);
+    return { pending: false };
   }
 
   function logout() {
