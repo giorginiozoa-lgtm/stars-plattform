@@ -56,6 +56,9 @@ button, .btn {
   background: var(--navy);
   color: #fff;
 }
+/* Links im Button-Stil (<a class="btn">) als Inline-Block, damit Innen- und
+   Aussenabstaende wirken und der Button nicht in den Text darueber ragt. */
+a.btn { display: inline-block; text-decoration: none; line-height: 1.3; }
 button:hover, .btn:hover { background: var(--navy-700); }
 button:disabled { opacity: .55; cursor: not-allowed; }
 .btn-gold { background: var(--gold); color: var(--navy); }
