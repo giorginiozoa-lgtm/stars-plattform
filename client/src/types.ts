@@ -16,6 +16,7 @@ export interface User {
   available?: boolean;
   offers_peer_support?: boolean;
   status?: 'pending' | 'active' | 'rejected';
+  can_view_analytics?: boolean;
 }
 
 export interface Tag {

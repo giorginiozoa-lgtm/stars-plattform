@@ -19,6 +19,7 @@ export function publicUser(u) {
     available: u.available === undefined ? true : !!u.available,
     offers_peer_support: !!u.offers_peer_support,
     status: u.status || 'active',
+    can_view_analytics: !!u.can_view_analytics,
   };
 }
 

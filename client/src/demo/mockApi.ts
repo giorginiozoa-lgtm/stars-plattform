@@ -996,6 +996,7 @@ function publicUser(u: Row | undefined | null) {
     available: u.available === undefined ? true : !!u.available,
     offers_peer_support: !!u.offers_peer_support,
     status: u.status || 'active',
+    can_view_analytics: !!u.can_view_analytics,
   };
 }
 
@@ -3079,7 +3080,7 @@ function countBy<T>(rows: T[], key: (r: T) => string) {
 }
 
 on('GET', '/analytics', true, ({ query, user }) => {
-  if (user!.role !== 'admin') throw new HttpError(403, 'Keine Berechtigung');
+  if (user!.role !== 'admin' && !findUser(user!.id)?.can_view_analytics) throw new HttpError(403, 'Keine Berechtigung');
   const months = Math.min(36, Math.max(1, Number(query.get('months')) || 12));
   const list = monthList(months);
   const from = `${list[0]}-01 00:00:00`;
@@ -3139,7 +3140,8 @@ on('GET', '/users', true, ({ user }) => {
   if (user!.role !== 'admin') throw new HttpError(403, 'Keine Berechtigung');
   const users = S.users
     .map((u) => ({ id: u.id, email: u.email, name: u.name, role: u.role, country: u.country ?? null, headline: u.headline ?? null,
-      signup_note: u.signup_note ?? null, status: u.status || 'active', created_at: u.created_at, reviewed_at: u.reviewed_at ?? null }))
+      signup_note: u.signup_note ?? null, status: u.status || 'active', created_at: u.created_at, reviewed_at: u.reviewed_at ?? null,
+      can_view_analytics: u.can_view_analytics ? 1 : 0 }))
     .sort((a, b) => Number(b.status === 'pending') - Number(a.status === 'pending') || cmp(b.created_at, a.created_at));
   return { users };
 });
@@ -3157,6 +3159,20 @@ on('POST', '/users/:id/status', true, ({ params, body, user }) => {
   u.reviewed_at = now();
   if (status === 'active' && before !== 'active') {
     notify(u.id, { type: 'system', title: 'Willkommen bei stars!', body: 'Dein Konto wurde freigegeben. Tritt einer Community bei, um loszulegen.', link: '/communities' });
+  }
+  return { ok: true };
+});
+
+on('POST', '/users/:id/analytics', true, ({ params, body, user }) => {
+  if (user!.role !== 'admin') throw new HttpError(403, 'Keine Berechtigung');
+  const u = findUser(Number(params.id));
+  if (!u) throw new HttpError(404, 'Konto nicht gefunden');
+  if (u.role === 'admin') throw new HttpError(400, 'Admin-Konten haben bereits Zugriff');
+  const enabled = !!(body || {}).enabled;
+  const before = !!u.can_view_analytics;
+  u.can_view_analytics = enabled ? 1 : 0;
+  if (enabled && !before) {
+    notify(u.id, { type: 'system', title: 'Zugriff auf das KPI-Dashboard', body: 'stars hat dir Lesezugriff auf das KPI-Dashboard gegeben.', link: '/analytics' });
   }
   return { ok: true };
 });

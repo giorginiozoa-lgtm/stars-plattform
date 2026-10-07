@@ -12,7 +12,7 @@ router.use(authRequired, requireRole('admin'));
 router.get('/', (_req, res) => {
   const users = db
     .prepare(
-      `SELECT id, email, name, role, country, headline, signup_note, status, created_at, reviewed_at
+      `SELECT id, email, name, role, country, headline, signup_note, status, created_at, reviewed_at, can_view_analytics
        FROM users ORDER BY (status = 'pending') DESC, created_at DESC`
     )
     .all();
@@ -34,6 +34,19 @@ router.post('/:id/status', (req, res) => {
       type: 'system', title: 'Willkommen bei stars!',
       body: 'Dein Konto wurde freigegeben. Tritt einer Community bei, um loszulegen.', link: '/communities',
     });
+  }
+  res.json({ ok: true });
+});
+
+// Lesezugriff auf das KPI-Dashboard erteilen oder entziehen (ohne Admin-Rechte).
+router.post('/:id/analytics', (req, res) => {
+  const u = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
+  if (!u) return res.status(404).json({ error: 'Konto nicht gefunden' });
+  if (u.role === 'admin') return res.status(400).json({ error: 'Admin-Konten haben bereits Zugriff' });
+  const enabled = !!(req.body || {}).enabled;
+  db.prepare('UPDATE users SET can_view_analytics = ? WHERE id = ?').run(enabled ? 1 : 0, u.id);
+  if (enabled && !u.can_view_analytics) {
+    notify(u.id, { type: 'system', title: 'Zugriff auf das KPI-Dashboard', body: 'stars hat dir Lesezugriff auf das KPI-Dashboard gegeben.', link: '/analytics' });
   }
   res.json({ ok: true });
 });

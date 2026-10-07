@@ -1,12 +1,18 @@
-// KPI-Dashboard fuer stars (nur Administration): Kennzahlen eines Zeitraums,
+// KPI-Dashboard fuer stars (Administration sowie Konten mit dem Zusatzrecht
+// «KPI-Dashboard», z.B. Projektpartner – nur lesend): Kennzahlen eines Zeitraums,
 // Vergleich mit dem Vorzeitraum und Zeitreihen je Monat. Grundlage fuer die
 // grafische Auswertung und den Excel-Export im Frontend.
 import { Router } from 'express';
 import { db } from '../db.js';
-import { authRequired, requireRole } from '../auth.js';
+import { authRequired } from '../auth.js';
 
 const router = Router();
-router.use(authRequired, requireRole('admin'));
+router.use(authRequired, (req, res, next) => {
+  if (req.user.role === 'admin') return next();
+  const u = db.prepare('SELECT can_view_analytics FROM users WHERE id = ?').get(req.user.id);
+  if (u?.can_view_analytics) return next();
+  return res.status(403).json({ error: 'Keine Berechtigung' });
+});
 
 const one = (sql, ...p) => db.prepare(sql).get(...p)?.n ?? 0;
 

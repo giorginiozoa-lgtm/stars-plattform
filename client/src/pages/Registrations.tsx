@@ -16,6 +16,7 @@ interface Account {
   status: 'pending' | 'active' | 'rejected';
   created_at: string;
   reviewed_at: string | null;
+  can_view_analytics: number;
 }
 
 const STATUS: Record<Account['status'], { de: string; en: string; cls: string }> = {
@@ -91,6 +92,13 @@ export default function Registrations() {
               <b>{u.name}</b> <small className="muted">{u.email} · {t('role.' + u.role)}</small>
               <div className="muted">{u.country}</div>
             </div>
+            {u.status === 'active' && (
+              <button className={u.can_view_analytics ? 'btn-gold btn-sm' : 'btn-outline btn-sm'} aria-pressed={!!u.can_view_analytics}
+                title={tx('Lesezugriff auf das KPI-Dashboard (ohne Admin-Rechte)', 'Read access to the KPI dashboard (without admin rights)')}
+                onClick={async () => { await api.post(`/users/${u.id}/analytics`, { enabled: !u.can_view_analytics }); load(); }}>
+                📊 {u.can_view_analytics ? tx('Dashboard-Zugriff', 'Dashboard access') : tx('Dashboard freigeben', 'Grant dashboard')}
+              </button>
+            )}
             <span className={`badge ${STATUS[u.status].cls}`} style={{ alignSelf: 'center' }}>{lx(STATUS[u.status])}</span>
             {u.status === 'active'
               ? <button className="btn-ghost btn-sm" onClick={() => setStatus(u, 'rejected')}>{tx('Sperren', 'Block')}</button>

@@ -104,10 +104,8 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
     { to: '/learning', ico: '🎓', label: t('nav.learning') },
     { to: '/profile', ico: '⚙', label: t('nav.profile') },
     { to: '/feedback', ico: '💡', label: t('nav.feedback') },
-    ...(user!.role === 'admin' ? [
-      { to: '/analytics', ico: '📊', label: t('nav.analytics') },
-      { to: '/registrations', ico: '✔', label: t('nav.registrations') },
-    ] : []),
+    ...(user!.role === 'admin' || user!.can_view_analytics ? [{ to: '/analytics', ico: '📊', label: t('nav.analytics') }] : []),
+    ...(user!.role === 'admin' ? [{ to: '/registrations', ico: '✔', label: t('nav.registrations') }] : []),
   ];
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>

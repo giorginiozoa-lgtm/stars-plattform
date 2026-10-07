@@ -467,6 +467,8 @@ export function initSchema() {
   addColumnIfMissing('users', 'status', "TEXT NOT NULL DEFAULT 'active'");  // 'pending' | 'active' | 'rejected'
   addColumnIfMissing('users', 'signup_note', 'TEXT');                       // Bezug zu stars / Anliegen
   addColumnIfMissing('users', 'reviewed_at', 'TEXT');
+  // Zusatzrecht: Lesezugriff auf das KPI-Dashboard ohne Admin-Rechte.
+  addColumnIfMissing('users', 'can_view_analytics', 'INTEGER NOT NULL DEFAULT 0');
   extendSessionFormats();
 }
 
