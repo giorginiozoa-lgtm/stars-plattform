@@ -36,6 +36,15 @@ export async function restore(dbPath) {
   if (!backupEnabled) return false;
   const meta = await fetch(api, { headers: headers() });
   if (meta.status === 404) {
+    // 404 heisst bei privaten Repos auch «kein Zugriff» – daher Repo-Zugriff pruefen,
+    // statt faelschlich mit leerer Datenbank zu starten.
+    const repo = await fetch(`${API_BASE}/repos/${REPO}`, { headers: headers() });
+    if (!repo.ok) {
+      throw new Error(
+        `[backup] Repository ${REPO} nicht erreichbar (${repo.status}). Token pruefen: ` +
+          'Zugriff auf genau dieses Repository und «Contents: Read and write».'
+      );
+    }
     console.log('[backup] Noch keine Sicherung vorhanden – Start mit neuer Datenbank.');
     return false;
   }
