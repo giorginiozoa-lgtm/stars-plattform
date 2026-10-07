@@ -85,7 +85,7 @@ node server/test/network.e2e.mjs   # 32 Prüfungen der Iteration 3
 | Variante | Wofür | Daten |
 |----------|-------|-------|
 | **GitHub Pages** – https://giorginiozoa-lgtm.github.io/stars-plattform/ | Klick-Tests, Usability-Tests mit Einzelpersonen | nur im Browser der Testperson |
-| **Render (Free)** – `render.yaml` | gemeinsame Testprojekte: EEM, Alumni und stars auf denselben Daten | SQLite, gesichert in privates GitHub-Repo |
+| **Render (Free)** – https://stars-plattform.onrender.com (`render.yaml`) | gemeinsame Testprojekte: EEM, Alumni und stars auf denselben Daten | SQLite, gesichert in privates GitHub-Repo |
 
 **GitHub Pages** wird bei jedem Push auf `main` automatisch gebaut
 (`.github/workflows/pages.yml`). Feedback aus der Pages-Version geht per
