@@ -338,7 +338,7 @@ export interface IntroSuggestion {
 export interface StarsEvent {
   id: number;
   slug: string;
-  kind: 'symposium' | 'study_tour' | 'online';
+  kind: 'symposium' | 'study_tour' | 'online' | 'exchange';
   title_de: string;
   title_en: string;
   location: string | null;
@@ -349,6 +349,7 @@ export interface StarsEvent {
   url: string | null;
   interested_count: number;
   scholarship_count: number;
+  offer_count: number;
   my_status: 'interested' | 'requested' | 'granted' | 'waitlist' | 'declined' | null;
   my_scholarship: number | null;
   my_motivation: string | null;
@@ -367,6 +368,7 @@ export interface EventRegistration {
   headline: string | null;
   avatar_seed: string | null;
   role: Role;
+  kind?: StarsEvent['kind'];
 }
 export interface SessionRequest {
   id: number;

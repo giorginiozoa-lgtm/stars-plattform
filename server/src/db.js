@@ -399,7 +399,7 @@ export function initSchema() {
   CREATE TABLE IF NOT EXISTS events (
     id             INTEGER PRIMARY KEY AUTOINCREMENT,
     slug           TEXT NOT NULL UNIQUE,
-    kind           TEXT NOT NULL CHECK (kind IN ('symposium','study_tour','online')),
+    kind           TEXT NOT NULL CHECK (kind IN ('symposium','study_tour','online','exchange')),
     title_de       TEXT NOT NULL,
     title_en       TEXT NOT NULL,
     location       TEXT,
@@ -471,6 +471,8 @@ export function initSchema() {
   addColumnIfMissing('users', 'can_view_analytics', 'INTEGER NOT NULL DEFAULT 0');
   extendSessionFormats();
   renameDemoPersona();
+  extendEventKinds();
+  ensureExchangePilot();
 }
 
 // Der Beispielfall der dritten Iteration hiess zunaechst «Sunita Rai» (fiktive
@@ -515,6 +517,50 @@ function extendSessionFormats() {
   });
   db.exec('PRAGMA legacy_alter_table = OFF;');
   db.exec('PRAGMA foreign_keys = ON;');
+}
+
+// Smoke Test zu Hypothese H11 (Bachelorarbeit, Anhang I): Feedback einer
+// Entrepreneur:in aus Nepal (Oktober 2026) regte einen mehrwoechigen
+// Praxisaustausch bei Unternehmen aus dem Netzwerk an. Statt eine eigene
+// Funktion zu bauen, wird zuerst die Nachfrage auf beiden Seiten gemessen:
+// Entrepreneurs bekunden Interesse, Alumni bieten einen Platz an.
+export const EXCHANGE_PILOT = {
+  slug: 'exchange-pilot-2027',
+  kind: 'exchange',
+  title_de: 'Praxisaustausch bei Alumni-Unternehmen (Pilot 2027)',
+  title_en: 'Practical exchange at alumni companies (pilot 2027)',
+  location: 'Schweiz / Europa',
+  starts_on: '2027-03-01',
+  ends_on: '2027-12-31',
+  description_de:
+    'Einige Wochen in einem Schweizer oder europäischen Unternehmen aus dem stars-Netzwerk mitarbeiten und Betrieb, Qualitätssicherung, Vertrieb und Führung aus der Nähe kennenlernen; das Gelernte fliesst danach ins eigene Team. Zeitraum nach Absprache. Ob der Pilot stattfindet, entscheidet stars anhand des Interesses auf beiden Seiten.',
+  description_en:
+    'Spend a few weeks in a Swiss or European company from the stars network and see operations, quality control, distribution and management up close, then share what you learned with your own team. Timing by arrangement. stars will decide whether the pilot goes ahead based on interest from both sides.',
+};
+
+// Neue Veranstaltungsart 'exchange' (Neuaufbau der Tabelle wie bei
+// extendSessionFormats; Anmeldungen bleiben erhalten).
+function extendEventKinds() {
+  const row = db.prepare(`SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'events'`).get();
+  if (!row || row.sql.includes("'exchange'")) return;
+  db.exec('PRAGMA foreign_keys = OFF;');
+  db.exec('PRAGMA legacy_alter_table = ON;');
+  withTx(() => {
+    db.exec(`ALTER TABLE events RENAME TO events_old;`);
+    db.exec(row.sql.replace("'online')", "'online','exchange')"));
+    db.exec(`INSERT INTO events SELECT * FROM events_old;`);
+    db.exec(`DROP TABLE events_old;`);
+  });
+  db.exec('PRAGMA legacy_alter_table = OFF;');
+  db.exec('PRAGMA foreign_keys = ON;');
+}
+
+export function ensureExchangePilot() {
+  const e = EXCHANGE_PILOT;
+  db.prepare(
+    `INSERT OR IGNORE INTO events (slug, kind, title_de, title_en, location, starts_on, ends_on, description_de, description_en)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(e.slug, e.kind, e.title_de, e.title_en, e.location, e.starts_on, e.ends_on, e.description_de, e.description_en);
 }
 
 function addColumnIfMissing(table, column, type) {

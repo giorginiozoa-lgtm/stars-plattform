@@ -56,7 +56,7 @@ check('Anfrage ohne Zweck abgelehnt', r.status === 400);
 
 // --- Veranstaltungen und Foerderplaetze (FA-26) -----------------------------
 r = await call(amara, 'GET', '/events');
-check('Vier Veranstaltungen', r.data.events?.length === 4);
+check('Fünf Veranstaltungen (inkl. Praxisaustausch-Pilot)', r.data.events?.length === 5);
 const bulgaria = r.data.events.find((e) => e.slug === 'bulgaria-2027');
 r = await call(amara, 'POST', `/events/${bulgaria.id}/register`, { scholarship: true });
 check('Foerderplatz ohne Begruendung abgelehnt', r.status === 400);
@@ -68,6 +68,17 @@ r = await call(admin, 'POST', `/events/registrations/${bulgaria.id}/${(await cal
 check('stars gewaehrt Foerderplatz', r.data.ok === true);
 r = await call(amara, 'GET', '/events');
 check('Status beim EEM sichtbar', r.data.events.find((e) => e.id === bulgaria.id).my_status === 'granted');
+
+// --- Smoke Test Praxisaustausch (H11): Interesse und Angebote getrennt zaehlen ---
+const exchange = r.data.events.find((e) => e.slug === 'exchange-pilot-2027');
+check('Praxisaustausch-Pilot vorhanden', exchange?.kind === 'exchange');
+await call(ravi, 'POST', `/events/${exchange.id}/register`, { motivation: 'Qualitätssicherung kennenlernen' });
+await call(anna, 'POST', `/events/${exchange.id}/register`, { motivation: 'Unser Werk, 4 Wochen' });
+r = await call(ravi, 'GET', '/events');
+const ex2 = r.data.events.find((e) => e.id === exchange.id);
+check('Interesse und Alumni-Angebot gezaehlt', ex2.interested_count === 2 && ex2.offer_count === 1);
+r = await call(admin, 'GET', '/events/registrations');
+check('stars sieht Angebot mit Rolle und Art', r.data.registrations.some((x) => x.kind === 'exchange' && x.role === 'mentor' && x.motivation));
 
 // --- Pitch-&-Learn-Slots (FA-24) -------------------------------------------
 r = await call(admin, 'GET', '/communities');

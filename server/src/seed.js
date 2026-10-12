@@ -3,7 +3,7 @@
 // Demonstrationsinhalte des Prototyps, KEINE empirischen Erhebungsdaten.
 //
 // Ausfuehren:  npm run seed        (im Ordner /server oder via Root-Script)
-import { db, initSchema, orderPair } from './db.js';
+import { db, initSchema, orderPair, ensureExchangePilot } from './db.js';
 import { hashPassword } from './auth.js';
 import { computeMatches } from './matching.js';
 
@@ -825,6 +825,7 @@ for (const [slug, kind, de, en, loc, from, to, dde, den] of [
   ['switzerland-2027', 'symposium', 'stars Switzerland Symposium', 'stars Switzerland Symposium', 'Wolfsberg, Ermatingen', '2027-09-03', '2027-09-06',
     'Symposium am Bodensee mit Fellows, Alumni und Partnern.', 'Symposium at Lake Constance with fellows, alumni and partners.'],
 ]) ev[slug] = Number(insEv.run(slug, kind, de, en, loc, from, to, dde, den).lastInsertRowid);
+ensureExchangePilot(); // Smoke Test H11, ohne Demo-Anmeldungen
 const insReg = db.prepare(
   `INSERT INTO event_registrations (event_id, user_id, scholarship, motivation, status, created_at) VALUES (?, ?, ?, ?, ?, datetime('now', ?))`
 );

@@ -954,6 +954,7 @@ function seed() {
     });
     ev[slug] = id;
   }
+  ensureExchangePilot();
   const addReg = (eventId: number, uid: number, scholarship: number, motivation: string | null, status: string, a: string) =>
     S.event_registrations.push({ event_id: eventId, user_id: uid, scholarship, motivation, status, created_at: ago(a) });
   addReg(ev['singapore-2027'], vedika, 1, 'Als Entrepreneur aus einem Emerging Market ist der Zugang zu Symposien ohne Firmensponsoring schwierig. Ein subventionierter Platz würde mir die Teilnahme ermöglichen.', 'requested', '-3 days');
@@ -2967,6 +2968,7 @@ on('GET', '/events', true, ({ user }) => ({
         ...e,
         interested_count: regs.length,
         scholarship_count: regs.filter((r) => r.scholarship === 1).length,
+        offer_count: regs.filter((r) => findUser(r.user_id)?.role === 'mentor').length,
         my_status: mine?.status ?? null,
         my_scholarship: mine?.scholarship ?? null,
         my_motivation: mine?.motivation ?? null,
@@ -2982,7 +2984,7 @@ on('GET', '/events/registrations', true, ({ user }) => {
       const e = S.events.find((x) => x.id === r.event_id)!;
       const u = findUser(r.user_id)!;
       return {
-        ...r, title_de: e.title_de, title_en: e.title_en, name: u.name, country: u.country,
+        ...r, title_de: e.title_de, title_en: e.title_en, kind: e.kind, name: u.name, country: u.country,
         headline: u.headline, avatar_seed: u.avatar_seed, role: u.role,
       };
     })
@@ -3278,6 +3280,21 @@ async function handle(method: string, rawPath: string, init: RequestInit | undef
   return jsonResponse({ error: 'Endpunkt nicht gefunden' }, 404);
 }
 
+// Smoke Test H11 (wie server/src/db.js): Praxisaustausch bei Alumni-Unternehmen,
+// auch in bereits gespeicherten Demo-Daten ergaenzt.
+function ensureExchangePilot() {
+  if (S.events.some((e) => e.slug === 'exchange-pilot-2027')) return;
+  S.events.push({
+    id: nextId('events'), slug: 'exchange-pilot-2027', kind: 'exchange',
+    title_de: 'Praxisaustausch bei Alumni-Unternehmen (Pilot 2027)',
+    title_en: 'Practical exchange at alumni companies (pilot 2027)',
+    location: 'Schweiz / Europa', starts_on: '2027-03-01', ends_on: '2027-12-31',
+    description_de: 'Einige Wochen in einem Schweizer oder europäischen Unternehmen aus dem stars-Netzwerk mitarbeiten und Betrieb, Qualitätssicherung, Vertrieb und Führung aus der Nähe kennenlernen; das Gelernte fliesst danach ins eigene Team. Zeitraum nach Absprache. Ob der Pilot stattfindet, entscheidet stars anhand des Interesses auf beiden Seiten.',
+    description_en: 'Spend a few weeks in a Swiss or European company from the stars network and see operations, quality control, distribution and management up close, then share what you learned with your own team. Timing by arrangement. stars will decide whether the pilot goes ahead based on interest from both sides.',
+    url: null,
+  });
+}
+
 export function installMockApi() {
   // Store laden oder frisch aufsetzen.
   let stored: string | null = null;
@@ -3290,6 +3307,7 @@ export function installMockApi() {
     } catch { ok = false; }
   }
   if (!ok) seed();
+  else ensureExchangePilot();
 
   const originalFetch = window.fetch.bind(window);
   window.fetch = ((input: any, init?: RequestInit) => {

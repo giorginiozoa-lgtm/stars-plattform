@@ -11,6 +11,7 @@ const KIND: Record<StarsEvent['kind'], { de: string; en: string }> = {
   symposium: { de: 'Symposium', en: 'Symposium' },
   study_tour: { de: 'Studienreise', en: 'Study tour' },
   online: { de: 'Online', en: 'Online' },
+  exchange: { de: 'Praxisaustausch', en: 'Practical exchange' },
 };
 const REG: Record<EventRegistration['status'], { de: string; en: string; cls: string }> = {
   interested: { de: 'Interesse gemeldet', en: 'Interest registered', cls: 'badge-domain' },
@@ -30,24 +31,42 @@ function EventCard({ e, reload }: { e: StarsEvent; reload: () => void }) {
   const { locale, loc } = useI18n();
   const tx = trx;
   const [apply, setApply] = useState(false);
+  const [interest, setInterest] = useState(false);
   const [motivation, setMotivation] = useState(e.my_motivation || '');
   const isAdmin = user!.role === 'admin';
+  // Praxisaustausch (Smoke Test H11): Entrepreneurs bekunden begruendetes
+  // Interesse, Alumni bieten einen Platz in ihrem Unternehmen an.
+  const exchange = e.kind === 'exchange';
+  const offers = exchange && user!.role === 'mentor';
   return (
     <div className="card" data-focus={`ev-${e.id}`}>
       <div className="flex items-center gap-sm">
         <span className="badge badge-stage">{lx(KIND[e.kind])}</span>
-        {e.my_status && <span className={`badge ${REG[e.my_status].cls} right`}>{lx(REG[e.my_status])}</span>}
+        {e.my_status && <span className={`badge ${REG[e.my_status].cls} right`}>{offers && e.my_status === 'interested' ? tx('Platz angeboten', 'Placement offered') : lx(REG[e.my_status])}</span>}
       </div>
       <h3 style={{ margin: '.5rem 0 .2rem' }}>{loc(e, 'title')}</h3>
       <div className="muted">📅 {range(e, locale)} · 📍 {e.location}</div>
       <p>{loc(e, 'description')}</p>
-      <small className="muted">{e.interested_count} {tx('Interessierte', 'interested')} · {e.scholarship_count} {tx('Förderanträge', 'scholarship requests')}</small>
+      {exchange
+        ? <small className="muted">{e.interested_count - e.offer_count} {tx('Interessierte', 'interested')} · {e.offer_count} {tx('Angebote von Alumni', 'offers from alumni')}</small>
+        : <small className="muted">{e.interested_count} {tx('Interessierte', 'interested')} · {e.scholarship_count} {tx('Förderanträge', 'scholarship requests')}</small>}
       {!isAdmin && (
         <div className="flex wrap gap-sm mt-sm">
-          {!e.my_status && <button className="btn-outline btn-sm" onClick={async () => { await api.post(`/events/${e.id}/register`, {}); reload(); }}>{tx('Interesse bekunden', 'Register interest')}</button>}
-          {(!e.my_status || e.my_status === 'interested') && <button className="btn-gold btn-sm" onClick={() => setApply((a) => !a)}>{tx('Förderplatz beantragen', 'Apply for scholarship')}</button>}
+          {!e.my_status && !exchange && <button className="btn-outline btn-sm" onClick={async () => { await api.post(`/events/${e.id}/register`, {}); reload(); }}>{tx('Interesse bekunden', 'Register interest')}</button>}
+          {!e.my_status && exchange && <button className="btn-outline btn-sm" onClick={() => setInterest((a) => !a)}>{offers ? tx('Platz anbieten', 'Offer a placement') : tx('Interesse bekunden', 'Register interest')}</button>}
+          {(!e.my_status || e.my_status === 'interested') && !offers && <button className="btn-gold btn-sm" onClick={() => setApply((a) => !a)}>{tx('Förderplatz beantragen', 'Apply for scholarship')}</button>}
           {e.my_status && <button className="btn-ghost btn-sm" onClick={async () => { await api.post(`/events/${e.id}/withdraw`); reload(); }}>{tx('Zurückziehen', 'Withdraw')}</button>}
         </div>
+      )}
+      {interest && (
+        <form className="subcard" onSubmit={async (ev) => { ev.preventDefault(); await api.post(`/events/${e.id}/register`, { motivation }); setInterest(false); reload(); }}>
+          <div className="field"><label>{offers
+            ? tx('Welches Unternehmen könnte jemanden aufnehmen, wie lange und in welchem Bereich?', 'Which company could host someone, for how long and in which area?')
+            : tx('Was möchtest du lernen und in welchem Bereich (z. B. Produktion, Qualität, Vertrieb)?', 'What would you like to learn and in which area (e.g. production, quality, distribution)?')}</label>
+            <textarea value={motivation} onChange={(ev) => setMotivation(ev.target.value)} required /></div>
+          <small className="muted">{tx('stars entscheidet anhand der Rückmeldungen, ob der Pilot stattfindet.', 'stars will use the responses to decide whether the pilot goes ahead.')}</small>
+          <div><button className="btn-gold btn-sm mt-sm" type="submit">{tx('Senden', 'Send')}</button></div>
+        </form>
       )}
       {apply && (
         <form className="subcard" onSubmit={async (ev) => { ev.preventDefault(); await api.post(`/events/${e.id}/register`, { scholarship: true, motivation }); setApply(false); reload(); }}>
@@ -80,7 +99,7 @@ function AdminRequests() {
             <b>{r.name}</b> <small className="muted">{r.country} · {loc(r, 'title')}</small>
             {r.motivation && <div className="muted">«{r.motivation}»</div>}
           </div>
-          <span className={`badge ${REG[r.status].cls}`}>{lx(REG[r.status])}</span>
+          <span className={`badge ${REG[r.status].cls}`}>{r.kind === 'exchange' && r.role === 'mentor' && r.status === 'interested' ? tx('Platz angeboten', 'Placement offered') : lx(REG[r.status])}</span>
           {r.scholarship === 1 && (
             <div className="flex gap-sm">
               {(['granted', 'waitlist', 'declined'] as const).map((s) => (

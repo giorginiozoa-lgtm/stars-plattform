@@ -16,6 +16,8 @@ router.get('/', (req, res) => {
       `SELECT e.*,
          (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id) AS interested_count,
          (SELECT COUNT(*) FROM event_registrations r WHERE r.event_id = e.id AND r.scholarship = 1) AS scholarship_count,
+         (SELECT COUNT(*) FROM event_registrations r JOIN users u ON u.id = r.user_id
+            WHERE r.event_id = e.id AND u.role = 'mentor') AS offer_count,
          r.status AS my_status, r.scholarship AS my_scholarship, r.motivation AS my_motivation
        FROM events e
        LEFT JOIN event_registrations r ON r.event_id = e.id AND r.user_id = ?
@@ -55,7 +57,7 @@ router.get('/registrations', (req, res) => {
   if (req.user.role !== 'admin') return res.status(403).json({ error: 'Keine Berechtigung' });
   const registrations = db
     .prepare(
-      `SELECT r.*, e.title_de, e.title_en, u.name, u.country, u.headline, u.avatar_seed, u.role
+      `SELECT r.*, e.title_de, e.title_en, e.kind, u.name, u.country, u.headline, u.avatar_seed, u.role
        FROM event_registrations r JOIN events e ON e.id = r.event_id JOIN users u ON u.id = r.user_id
        ORDER BY r.scholarship DESC, (r.status = 'requested') DESC, r.created_at DESC`
     )
