@@ -27,7 +27,7 @@
 //   – Token als Base64-Payload statt signiertem JWT
 // ---------------------------------------------------------------------------
 
-const STORE_KEY = 'stars_demo_db_v4';
+const STORE_KEY = 'stars_demo_db_v5';
 
 type Row = Record<string, any>;
 
@@ -933,6 +933,43 @@ function seed() {
     S.notifications.push({ id: nextId('notifications'), user_id: uid, type, title, body, link, read_at: null, created_at: ago(a) });
   seedNotif(M('anna.keller@example.com'), 'match', 'stars möchte dich Omar Haddad vorstellen', 'Investor:in mit Erfahrung in EdTech im MENA-Raum', '/network?focus=2', '-1 days');
   seedNotif(admin, 'system', 'Neue Intro-Anfrage', 'Vedika Murarka: Alumni in Stiftungen/CSR mit Bildungsfokus', '/network?focus=1', '-2 days');
+
+  // Faelle aus dem EEM-Feedback vom 8./10. Oktober 2026, mit Einwilligung
+  // (wie server/src/eemCases.js): Nonzuzo Makanda (NFLA) und Prasanna Karki.
+  const eemCases: { email: string; name: string; country: string; region: string; headline: string; bio: string;
+    tags: [string, number][]; community: string; post: string; target: string; purpose: string; introTags: string[] }[] = [
+    { email: 'nonzuzo.makanda@example.com', name: 'Nonzuzo Makanda', country: 'Südafrika', region: 'Sub-Saharan Africa',
+      headline: 'CEO, National Financial Literacy Advocacy (NFLA)',
+      bio: 'NFLA bereitet KMU auf Fremdfinanzierung vor und bietet Finanzierern eine Pipeline finanzierungsbereiter KMU. Ziel: das Funding-Readiness-Programm skalieren und einen Fonds aufbauen, der bedingt bewilligten KMU die nötigen Eigenmittel vorschiesst.',
+      tags: [['financing', 5], ['sustainability', 4], ['scaling', 4], ['market-ssa', 5]],
+      community: 'ecosystem-builders',
+      post: 'Hallo zusammen! NFLA bereitet in Südafrika KMU auf Bankkredite vor. Viele erhalten eine bedingte Zusage, scheitern dann aber an den Eigenmitteln. Wer hat Erfahrung mit Fonds oder Programmen, die diese Lücke schliessen?',
+      target: 'Fachperson für KMU-Finanzierung in Emerging Markets mit Erfahrung im Entwicklungs- und Impact-Sektor',
+      purpose: 'Best Practices für die Skalierung des Funding-Readiness-Programms und den Aufbau eines Fonds für die Eigenmittel von KMU.',
+      introTags: ['financing', 'net-investors', 'net-ngo', 'market-ssa'] },
+    { email: 'prasanna.karki@example.com', name: 'Prasanna Karki', country: 'Nepal', region: 'South Asia',
+      headline: 'Natürliche Wellness-Lebensmittel und Hautpflege, Nepal',
+      bio: 'Stellt natürliche Wellness-Lebensmittel und Hautpflegeprodukte in Nepal her. Nächster Schritt: Exportmöglichkeiten finden und in internationale Märkte eintreten, besonders in Europa.',
+      tags: [['intl-expansion', 5], ['sales', 4], ['operations', 3], ['market-sa', 5]],
+      community: 'online-alumni-chapter',
+      post: 'Hallo zusammen! Wir stellen in Nepal natürliche Wellness-Lebensmittel und Hautpflege her und möchten exportieren. Wer kennt Distributoren, Importeure oder strategische Partner in Europa für solche Produkte?',
+      target: 'Distributoren, Importeure oder strategische Partner in Europa für natürliche Wellness-Lebensmittel und Hautpflege',
+      purpose: 'Exportmöglichkeiten identifizieren und in neue internationale Märkte eintreten.',
+      introTags: ['net-distribution', 'net-corporates', 'intl-expansion'] },
+  ];
+  for (const c of eemCases) {
+    const uid = addUser({ email: c.email, name: c.name, role: 'entrepreneur', country: c.country, region: c.region,
+      headline: c.headline, bio: c.bio, languages: 'en', avatar: c.name, ago: '-4 days' });
+    entIds[c.email] = uid;
+    addUserTags(uid, c.tags);
+    const cid = S.communities.find((x) => x.slug === c.community)?.id;
+    if (cid) {
+      addMember(cid, uid, 'member');
+      S.community_posts.push({ id: nextId('community_posts'), community_id: cid, author_id: uid, body: c.post, created_at: ago('-2 days') });
+    }
+    const iid = addIntro(uid, c.target, c.purpose, 'requested', null, null, '-2 days', '-2 days', c.introTags);
+    seedNotif(admin, 'system', 'Neue Intro-Anfrage', `${c.name}: ${c.target}`, `/network?focus=${iid}`, '-2 days');
+  }
 
   // Veranstaltungen von stars (Termine gemaess stars, Stand Oktober 2026).
   const ev: Record<string, number> = {};

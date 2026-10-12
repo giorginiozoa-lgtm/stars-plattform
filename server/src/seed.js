@@ -6,6 +6,7 @@
 import { db, initSchema, orderPair, ensureExchangePilot } from './db.js';
 import { hashPassword } from './auth.js';
 import { computeMatches } from './matching.js';
+import { ensureEemCases2026 } from './eemCases.js';
 
 initSchema();
 
@@ -833,7 +834,8 @@ insReg.run(ev['singapore-2027'], vedika, 1, 'Als Entrepreneur aus einem Emerging
 insReg.run(ev['india-2027'], E('amara.okafor@example.com'), 0, null, 'interested', '-6 days');
 insReg.run(ev['india-2027'], E('ravi.patel@example.com'), 1, 'Austausch mit indischen HealthTech-Unternehmen und potenziellen Partnern vor Ort.', 'waitlist', '-9 days');
 insNotif.run(admin, 'system', 'Antrag auf Förderplatz', 'Vedika Murarka: stars Singapore Symposium', `/events?focus=reg-${ev['singapore-2027']}-${vedika}`, '-3 days');
-console.log('  Iteration 3: 4 Alumni, 1 Persona-Fall, Online Alumni Chapter, 2 Intro-Anfragen, 4 Veranstaltungen');
+ensureEemCases2026(); // Faelle N. Makanda (NFLA) und P. Karki, mit Einwilligung
+console.log('  Iteration 3: 4 Alumni, 3 Beispielfaelle aus dem EEM-Feedback, Online Alumni Chapter, 4 Intro-Anfragen, 5 Veranstaltungen');
 
 // ---------------------------------------------------------------------------
 // 7) Ein paar Start-Benachrichtigungen fuer die Admin-Demo
@@ -850,3 +852,4 @@ console.log('  Mentor:in:    anna.keller@example.com');
 console.log('  Entrepreneur: amara.okafor@example.com');
 console.log('  Weitere: kwame.mensah@example.com (Matching), fatima.zahra@example.com (offene Einladung)');
 console.log('  Iteration 3: vedika.murarka@example.com (Intro-Anfrage, Pitch & Learn, Förderplatz)');
+console.log('               nonzuzo.makanda@example.com, prasanna.karki@example.com (Intro-Anfragen)');

@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import { existsSync } from 'node:fs';
 
 import { db, initSchema, DB_PATH } from './db.js';
+import { ensureEemCases2026 } from './eemCases.js';
 import { startBackups } from './backup.js';
 import authRoutes from './routes/auth.js';
 import tagRoutes from './routes/tags.js';
@@ -27,6 +28,7 @@ import analyticsRoutes from './routes/analytics.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 initSchema();
+ensureEemCases2026();
 
 const app = express();
 app.use(cors());
