@@ -61,7 +61,7 @@ export default function AuthScreen() {
       </div>
 
       <div className="auth-form">
-        <div className="flex" style={{ justifyContent: 'flex-end', marginBottom: '.6rem' }}><LanguageToggle /></div>
+        <div className="auth-lang"><LanguageToggle /></div>
         <form className="card" onSubmit={submit}>
           <h2>{mode === 'login' ? t('auth.welcome') : t('auth.createAccount')}</h2>
 
