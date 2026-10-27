@@ -136,6 +136,18 @@ Aufruf dauert dann ca. 1 Minute. Für Testbetrieb gedacht, nicht für
 Produktivbetrieb. Vor Tests mit realen Personendaten Einwilligung einholen;
 Admin-Konten entstehen nie per Selbstregistrierung.
 
+**Pilotbetrieb bei Infomaniak (seit 27.10.2026)** – https://plattform.the-stars.ch,
+Node.js-Website im Hosting von stars; Render ist seither pausiert (nie beide
+gleichzeitig mit derselben Sicherung betreiben). Konfiguration im Manager unter
+*Erweiterte Einstellungen → Node.js*:
+
+- Ausführungsbefehl: `env JWT_SECRET=… ADMIN_PASSWORD=… BACKUP_REPO=giorginiozoa-lgtm/stars-plattform-data BACKUP_TOKEN=… npm run start:prod`
+- Build-Befehl: `git fetch origin && git reset --hard origin/main && npm run install:all && npm run build`
+
+Update nach einem Push: im Dashboard der Website auf **Build** klicken (holt den
+neuen Stand von GitHub, baut und startet neu). Welche Version läuft, zeigt
+`/api/health` im Feld `commit`. Die Demo-Konten (`@example.com`) sind dort gesperrt.
+
 **Freigabe neuer Konten:** Wer sich registriert, kann die Plattform erst nutzen,
 wenn stars das Konto unter **Registrierungen** (nur Admin) freigibt; dort lassen
 sich Konten auch ablehnen oder sperren. Für lokale Tests abschaltbar mit

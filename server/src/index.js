@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { db, initSchema, DB_PATH } from './db.js';
 import { ensureEemCases2026 } from './eemCases.js';
@@ -35,7 +35,24 @@ app.use(cors());
 app.use(express.json({ limit: '1mb' }));
 app.use(startBackups(db, DB_PATH)); // nur aktiv, wenn BACKUP_REPO/BACKUP_TOKEN gesetzt sind
 
-app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
+// Laufende Code-Version (Git-Commit) – zeigt nach einem Update, ob es angekommen ist.
+function gitCommit() {
+  try {
+    const git = join(__dirname, '..', '..', '.git');
+    const head = readFileSync(join(git, 'HEAD'), 'utf8').trim();
+    if (!head.startsWith('ref: ')) return head.slice(0, 7);
+    const ref = head.slice(5);
+    const file = join(git, ref);
+    if (existsSync(file)) return readFileSync(file, 'utf8').trim().slice(0, 7);
+    const packed = readFileSync(join(git, 'packed-refs'), 'utf8').split('\n').find((l) => l.endsWith(' ' + ref));
+    return packed ? packed.slice(0, 7) : null;
+  } catch {
+    return null;
+  }
+}
+const COMMIT = gitCommit();
+
+app.get('/api/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString(), commit: COMMIT }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tags', tagRoutes);
