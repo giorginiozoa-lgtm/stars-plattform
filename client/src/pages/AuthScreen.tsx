@@ -117,13 +117,12 @@ export default function AuthScreen() {
             </a>
           </p>
 
-          {mode === 'login' && (
+          {/* Demo-Zugaenge nur lokal und in der Browser-Demo, nie auf dem echten Server */}
+          {mode === 'login' && (import.meta.env.DEV || isDemo()) && (
             <div className="notice mt">
               <b>{t('auth.demoHint')}</b>
               <div className="mt-sm flex wrap gap-sm">
-                {(import.meta.env.DEV || isDemo()) && (
-                  <button type="button" className="btn-sm btn-outline" onClick={() => demo('admin@the-stars.ch')}>Admin</button>
-                )}
+                <button type="button" className="btn-sm btn-outline" onClick={() => demo('admin@the-stars.ch')}>Admin</button>
                 <button type="button" className="btn-sm btn-outline" onClick={() => demo('anna.keller@example.com')}>Mentor:in</button>
                 <button type="button" className="btn-sm btn-outline" onClick={() => demo('amara.okafor@example.com')}>Entrepreneur:in</button>
               </div>
