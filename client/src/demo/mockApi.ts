@@ -27,7 +27,7 @@
 //   – Token als Base64-Payload statt signiertem JWT
 // ---------------------------------------------------------------------------
 
-const STORE_KEY = 'stars_demo_db_v6'; // v6: Faelle Kenia/Sambia, Onboarding
+const STORE_KEY = 'stars_demo_db_v7'; // v7: Faelle J. Rugano/T. Chanda, Onboarding
 
 type Row = Record<string, any>;
 
@@ -935,7 +935,7 @@ function seed() {
   seedNotif(admin, 'system', 'Neue Intro-Anfrage', 'Vedika Murarka: Alumni in Stiftungen/CSR mit Bildungsfokus', '/network?focus=1', '-2 days');
 
   // Faelle aus dem EEM-Feedback vom 8. bis 16. Oktober 2026 (wie server/src/eemCases.js):
-  // Nonzuzo Makanda (NFLA) und Prasanna Karki mit Einwilligung; Kenia und Sambia ohne Namen.
+  // Nonzuzo Makanda (NFLA), Prasanna Karki, Joyce Rugano (Ecorich) und Taonga Chanda (Eco-Africa Energies).
   const eemCases: { email: string; name: string; country: string; region: string; headline: string; bio: string;
     tags: [string, number][]; community: string; post: string; target: string; purpose: string; introTags: string[]; peer?: boolean }[] = [
     { email: 'nonzuzo.makanda@example.com', name: 'Nonzuzo Makanda', country: 'Südafrika', region: 'Sub-Saharan Africa',
@@ -956,21 +956,21 @@ function seed() {
       target: 'Distributoren, Importeure oder strategische Partner in Europa für natürliche Wellness-Lebensmittel und Hautpflege',
       purpose: 'Exportmöglichkeiten identifizieren und in neue internationale Märkte eintreten.',
       introTags: ['net-distribution', 'net-corporates', 'intl-expansion'] },
-    { email: 'eem.kenia@example.com', name: 'EEM-Fall Kenia', country: 'Kenia', region: 'Sub-Saharan Africa',
-      headline: 'Organischer Dünger aus Abfall für Kleinbauern, Kenia',
-      bio: 'Verarbeitet organische Abfälle in Verarbeitungs-Hubs zu günstigem organischem Dünger für Kleinbauern. Wichtigster Bedarf: Wachstumskapital für weitere Hubs. Gewünscht: Mentoring mit klaren Meilensteinen und regelmässigen Check-ins (Fundraising, Unit Economics, Aufbau des Managementteams).',
+    { email: 'joyce.rugano@example.com', name: 'Joyce Rugano', country: 'Kenia', region: 'Sub-Saharan Africa',
+      headline: 'CEO, Ecorich Solutions Limited (Kenia)',
+      bio: 'Ecorich Solutions (www.ecorich.co.ke) verarbeitet organische Abfälle in Wastebot-Hubs zu günstigem organischem Dünger für Kleinbauern in Kenia. Teilnahme am stars Symposium in der Schweiz. Wichtigster Bedarf: Wachstumskapital für weitere Wastebot-Hubs. Gesucht: persönliche Vorstellung bei Investor:innen und strategischen Partnern (Klimatechnologie, Kreislaufwirtschaft, Landwirtschaft) mit Begleitung beim Investment Case. Mentor:in: erfahrene Unternehmerin, Führungskraft oder Investor:in mit Erfahrung im Skalieren physischer Produkte, idealerweise in Afrika (Fundraising, Unit Economics, Expansion, Managementteam). Wünscht strukturiertes Mentoring mit klaren Meilensteinen und Check-ins und teilt gerne die eigene Erfahrung.',
       tags: [['financing', 5], ['sustainability', 5], ['scaling', 4], ['operations', 3], ['market-ssa', 5]],
       community: 'circular-economy-impact', peer: true,
-      post: 'Hallo zusammen! Wir machen in Kenia aus organischen Abfällen Dünger für Kleinbauern und wollen weitere Verarbeitungs-Hubs finanzieren. Wer hat Erfahrung damit, einen Investment Case für Investor:innen im Bereich Klima und Landwirtschaft aufzubereiten?',
+      post: 'Hallo zusammen! Mit Ecorich machen wir in Kenia aus organischen Abfällen Dünger für Kleinbauern und wollen weitere Wastebot-Hubs finanzieren. Wer hat Erfahrung damit, einen Investment Case für Investor:innen im Bereich Klima und Landwirtschaft aufzubereiten?',
       target: 'Investor:innen und strategische Partner für Klimatechnologie, Kreislaufwirtschaft und Landwirtschaft in Emerging Markets',
-      purpose: 'Wachstumskapital für zusätzliche Verarbeitungs-Hubs gewinnen; persönliche Vorstellung mit Begleitung beim Investment Case.',
+      purpose: 'Wachstumskapital für zusätzliche Wastebot-Hubs gewinnen; persönliche Vorstellung mit Begleitung beim Investment Case.',
       introTags: ['financing', 'net-investors', 'net-corporates', 'market-ssa'] },
-    { email: 'eem.sambia@example.com', name: 'EEM-Fall Sambia', country: 'Sambia', region: 'Sub-Saharan Africa',
-      headline: 'Abfallverwertung, Recycling und Waste-to-Energy, Sambia',
-      bio: 'Baut in Sambia Abfallverwertung, Recycling und Waste-to-Energy auf. Wichtigster Bedarf: strategische Partnerschaften, Investitionen und internationale Marktverbindungen. Gewünscht: Mentor:in mit Erfahrung im Skalieren von Impact-Unternehmen (Kreislaufwirtschaft, erneuerbare Energie, Investment Readiness).',
+    { email: 'taonga.chanda@example.com', name: 'Taonga Chanda', country: 'Sambia', region: 'Sub-Saharan Africa',
+      headline: 'Founder & CEO, Eco-Africa Energies Ltd. (Lusaka, Sambia)',
+      bio: 'Eco-Africa Energies Ltd. (Lusaka) baut in Sambia Abfallverwertung, Recycling und Waste-to-Energy auf. Bisher über Online-Angebote und Ressourcen mit stars verbunden; möchte am stars Singapore Symposium im Juni 2027 teilnehmen. Wichtigster Bedarf: strategische Partnerschaften, Investitionen und internationale Marktverbindungen. Gesucht: Kontakte zu Entrepreneurs, Investor:innen, Fachleuten und Organisationen in Nachhaltigkeit, Klimainnovation und Social Enterprise sowie Möglichkeiten, die eigene Arbeit international zu zeigen. Mentor:in: Erfahrung im Skalieren von Impact-Unternehmen (Kreislaufwirtschaft, erneuerbare Energie, Klima), Investment Readiness und internationalem Wachstum. Teilt gerne die eigene Erfahrung.',
       tags: [['sustainability', 5], ['financing', 4], ['scaling', 4], ['strategy', 3], ['market-ssa', 5]],
       community: 'circular-economy-impact', peer: true,
-      post: 'Hallo zusammen! Wir bauen in Sambia Recycling und Waste-to-Energy auf. Wer kennt Organisationen oder Investor:innen im Bereich Kreislaufwirtschaft und Klima, die mit Unternehmen im südlichen Afrika zusammenarbeiten?',
+      post: 'Hallo zusammen! Mit Eco-Africa Energies bauen wir in Sambia Recycling und Waste-to-Energy auf. Wer kennt Organisationen oder Investor:innen im Bereich Kreislaufwirtschaft und Klima, die mit Unternehmen im südlichen Afrika zusammenarbeiten?',
       target: 'Erfahrene Entrepreneurs, Investor:innen und Organisationen in Nachhaltigkeit, Klimainnovation und Social Enterprise',
       purpose: 'Strategische Partnerschaften, Investitionen und internationale Marktverbindungen für das Wachstum der Kreislaufwirtschafts-Aktivitäten.',
       introTags: ['sustainability', 'net-investors', 'net-ngo', 'market-ssa'] },
