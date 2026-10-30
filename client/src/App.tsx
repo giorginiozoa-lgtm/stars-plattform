@@ -25,6 +25,7 @@ import Events from './pages/Events';
 import Feedback from './pages/Feedback';
 import Registrations from './pages/Registrations';
 import Analytics from './pages/Analytics';
+import Onboarding from './pages/Onboarding';
 
 function NotificationBell() {
   const { t, locale } = useI18n();
@@ -177,6 +178,7 @@ function Layout() {
             <Route path="/feedback" element={<Feedback />} />
             <Route path="/registrations" element={<Registrations />} />
             <Route path="/analytics" element={<Analytics />} />
+            <Route path="/welcome" element={<Onboarding />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>
@@ -189,5 +191,7 @@ export default function App() {
   const { user, loading } = useAuth();
   if (loading) return <Spinner />;
   if (!user) return <AuthScreen />;
+  // Neue Konten starten mit dem Onboarding (ohne Navigation, damit es kurz bleibt).
+  if (!user.onboarded) return <div className="content onboarding-only"><Onboarding /></div>;
   return <Layout />;
 }

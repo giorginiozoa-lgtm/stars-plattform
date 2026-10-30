@@ -75,7 +75,10 @@ export default function Profile() {
 
   return (
     <div>
-      <div className="page-head"><h1>{t('profile.title')}</h1></div>
+      <div className="page-head flex items-center">
+        <h1>{t('profile.title')}</h1>
+        <Link className="btn btn-outline btn-sm right" to="/welcome">★ {tx('Einführung erneut ansehen', 'Show introduction again')}</Link>
+      </div>
 
       <div className="card">
         <div className="flex items-center gap">

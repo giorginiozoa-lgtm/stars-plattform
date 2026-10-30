@@ -469,6 +469,12 @@ export function initSchema() {
   addColumnIfMissing('users', 'reviewed_at', 'TEXT');
   // Zusatzrecht: Lesezugriff auf das KPI-Dashboard ohne Admin-Rechte.
   addColumnIfMissing('users', 'can_view_analytics', 'INTEGER NOT NULL DEFAULT 0');
+  // Onboarding: kurzer Einstieg nach der ersten Anmeldung. Bestehende Konten
+  // gelten als eingefuehrt; nur noch nicht freigegebene sehen das Onboarding.
+  if (!db.prepare('PRAGMA table_info(users)').all().some((c) => c.name === 'onboarded_at')) {
+    db.exec('ALTER TABLE users ADD COLUMN onboarded_at TEXT');
+    db.exec(`UPDATE users SET onboarded_at = datetime('now') WHERE status != 'pending'`);
+  }
   extendSessionFormats();
   renameDemoPersona();
   extendEventKinds();

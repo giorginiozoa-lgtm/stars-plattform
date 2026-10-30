@@ -27,7 +27,7 @@
 //   – Token als Base64-Payload statt signiertem JWT
 // ---------------------------------------------------------------------------
 
-const STORE_KEY = 'stars_demo_db_v5';
+const STORE_KEY = 'stars_demo_db_v6'; // v6: Faelle Kenia/Sambia, Onboarding
 
 type Row = Record<string, any>;
 
@@ -934,10 +934,10 @@ function seed() {
   seedNotif(M('anna.keller@example.com'), 'match', 'stars möchte dich Omar Haddad vorstellen', 'Investor:in mit Erfahrung in EdTech im MENA-Raum', '/network?focus=2', '-1 days');
   seedNotif(admin, 'system', 'Neue Intro-Anfrage', 'Vedika Murarka: Alumni in Stiftungen/CSR mit Bildungsfokus', '/network?focus=1', '-2 days');
 
-  // Faelle aus dem EEM-Feedback vom 8./10. Oktober 2026, mit Einwilligung
-  // (wie server/src/eemCases.js): Nonzuzo Makanda (NFLA) und Prasanna Karki.
+  // Faelle aus dem EEM-Feedback vom 8. bis 16. Oktober 2026 (wie server/src/eemCases.js):
+  // Nonzuzo Makanda (NFLA) und Prasanna Karki mit Einwilligung; Kenia und Sambia ohne Namen.
   const eemCases: { email: string; name: string; country: string; region: string; headline: string; bio: string;
-    tags: [string, number][]; community: string; post: string; target: string; purpose: string; introTags: string[] }[] = [
+    tags: [string, number][]; community: string; post: string; target: string; purpose: string; introTags: string[]; peer?: boolean }[] = [
     { email: 'nonzuzo.makanda@example.com', name: 'Nonzuzo Makanda', country: 'Südafrika', region: 'Sub-Saharan Africa',
       headline: 'CEO, National Financial Literacy Advocacy (NFLA)',
       bio: 'NFLA bereitet KMU auf Fremdfinanzierung vor und bietet Finanzierern eine Pipeline finanzierungsbereiter KMU. Ziel: das Funding-Readiness-Programm skalieren und einen Fonds aufbauen, der bedingt bewilligten KMU die nötigen Eigenmittel vorschiesst.',
@@ -956,11 +956,30 @@ function seed() {
       target: 'Distributoren, Importeure oder strategische Partner in Europa für natürliche Wellness-Lebensmittel und Hautpflege',
       purpose: 'Exportmöglichkeiten identifizieren und in neue internationale Märkte eintreten.',
       introTags: ['net-distribution', 'net-corporates', 'intl-expansion'] },
+    { email: 'eem.kenia@example.com', name: 'EEM-Fall Kenia', country: 'Kenia', region: 'Sub-Saharan Africa',
+      headline: 'Organischer Dünger aus Abfall für Kleinbauern, Kenia',
+      bio: 'Verarbeitet organische Abfälle in Verarbeitungs-Hubs zu günstigem organischem Dünger für Kleinbauern. Wichtigster Bedarf: Wachstumskapital für weitere Hubs. Gewünscht: Mentoring mit klaren Meilensteinen und regelmässigen Check-ins (Fundraising, Unit Economics, Aufbau des Managementteams).',
+      tags: [['financing', 5], ['sustainability', 5], ['scaling', 4], ['operations', 3], ['market-ssa', 5]],
+      community: 'circular-economy-impact', peer: true,
+      post: 'Hallo zusammen! Wir machen in Kenia aus organischen Abfällen Dünger für Kleinbauern und wollen weitere Verarbeitungs-Hubs finanzieren. Wer hat Erfahrung damit, einen Investment Case für Investor:innen im Bereich Klima und Landwirtschaft aufzubereiten?',
+      target: 'Investor:innen und strategische Partner für Klimatechnologie, Kreislaufwirtschaft und Landwirtschaft in Emerging Markets',
+      purpose: 'Wachstumskapital für zusätzliche Verarbeitungs-Hubs gewinnen; persönliche Vorstellung mit Begleitung beim Investment Case.',
+      introTags: ['financing', 'net-investors', 'net-corporates', 'market-ssa'] },
+    { email: 'eem.sambia@example.com', name: 'EEM-Fall Sambia', country: 'Sambia', region: 'Sub-Saharan Africa',
+      headline: 'Abfallverwertung, Recycling und Waste-to-Energy, Sambia',
+      bio: 'Baut in Sambia Abfallverwertung, Recycling und Waste-to-Energy auf. Wichtigster Bedarf: strategische Partnerschaften, Investitionen und internationale Marktverbindungen. Gewünscht: Mentor:in mit Erfahrung im Skalieren von Impact-Unternehmen (Kreislaufwirtschaft, erneuerbare Energie, Investment Readiness).',
+      tags: [['sustainability', 5], ['financing', 4], ['scaling', 4], ['strategy', 3], ['market-ssa', 5]],
+      community: 'circular-economy-impact', peer: true,
+      post: 'Hallo zusammen! Wir bauen in Sambia Recycling und Waste-to-Energy auf. Wer kennt Organisationen oder Investor:innen im Bereich Kreislaufwirtschaft und Klima, die mit Unternehmen im südlichen Afrika zusammenarbeiten?',
+      target: 'Erfahrene Entrepreneurs, Investor:innen und Organisationen in Nachhaltigkeit, Klimainnovation und Social Enterprise',
+      purpose: 'Strategische Partnerschaften, Investitionen und internationale Marktverbindungen für das Wachstum der Kreislaufwirtschafts-Aktivitäten.',
+      introTags: ['sustainability', 'net-investors', 'net-ngo', 'market-ssa'] },
   ];
   for (const c of eemCases) {
     const uid = addUser({ email: c.email, name: c.name, role: 'entrepreneur', country: c.country, region: c.region,
       headline: c.headline, bio: c.bio, languages: 'en', avatar: c.name, ago: '-4 days' });
     entIds[c.email] = uid;
+    if (c.peer) findUser(uid)!.offers_peer_support = 1;
     addUserTags(uid, c.tags);
     const cid = S.communities.find((x) => x.slug === c.community)?.id;
     if (cid) {
@@ -1032,6 +1051,8 @@ function publicUser(u: Row | undefined | null) {
     capacity_hours: u.capacity_hours ?? null,
     available: u.available === undefined ? true : !!u.available,
     offers_peer_support: !!u.offers_peer_support,
+    // Demo-Konten gelten als eingefuehrt; nur neu registrierte sehen das Onboarding.
+    onboarded: u.onboarded_at !== null || u.role === 'admin',
     status: u.status || 'active',
     can_view_analytics: !!u.can_view_analytics,
   };
@@ -1482,6 +1503,7 @@ on('POST', '/auth/register', false, ({ body }) => {
     languages: Array.isArray(languages) ? languages.join(',') : languages || 'en',
     avatar_seed: name, support_roles: null, capacity_hours: null, available: 1, offers_peer_support: 0, created_at: now(),
     status: 'pending', signup_note: signup_note ? String(signup_note).slice(0, 1000) : null, reviewed_at: null,
+    onboarded_at: null,
   };
   S.users.push(user);
   // Neue Registrierungen muessen von stars freigegeben werden.
@@ -1528,6 +1550,12 @@ on('PATCH', '/auth/me', true, ({ user, body }) => {
   if (available !== undefined) u.available = available ? 1 : 0;
   if (offers_peer_support !== undefined) u.offers_peer_support = offers_peer_support ? 1 : 0;
   return { user: publicUser(u), tags: userTags(u.id) };
+});
+
+on('POST', '/auth/me/onboarded', true, ({ user }) => {
+  const u = findUser(user!.id)!;
+  if (!u.onboarded_at) u.onboarded_at = now();
+  return { user: publicUser(u) };
 });
 
 on('PUT', '/auth/me/tags', true, ({ user, body }) => {

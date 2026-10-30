@@ -17,6 +17,7 @@ export interface User {
   offers_peer_support?: boolean;
   status?: 'pending' | 'active' | 'rejected';
   can_view_analytics?: boolean;
+  onboarded?: boolean;
 }
 
 export interface Tag {
@@ -278,6 +279,7 @@ export interface Community {
   name_en: string;
   description_de?: string;
   description_en?: string;
+  tag_slug?: string;
   tag_name_de?: string;
   tag_name_en?: string;
   tag_category?: Tag['category'];

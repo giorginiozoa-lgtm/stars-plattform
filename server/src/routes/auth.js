@@ -114,6 +114,13 @@ router.patch('/me', authRequired, (req, res) => {
   res.json({ user: publicUser(user), tags: userTags(user.id) });
 });
 
+// Onboarding abgeschlossen (oder uebersprungen).
+router.post('/me/onboarded', authRequired, (req, res) => {
+  db.prepare(`UPDATE users SET onboarded_at = COALESCE(onboarded_at, datetime('now')) WHERE id = ?`).run(req.user.id);
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id);
+  res.json({ user: publicUser(user) });
+});
+
 // Eigene Fachgebiete/Interessen setzen (ersetzt die bestehende Auswahl).
 router.put('/me/tags', authRequired, (req, res) => {
   const { tags } = req.body || {}; // [{ tag_id, weight }]

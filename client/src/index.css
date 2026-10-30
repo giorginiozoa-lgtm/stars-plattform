@@ -370,3 +370,6 @@ textarea { resize: vertical; min-height: 90px; }
 .barlist-val { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
 .kpi-delta { display: block; margin-top: .25rem; font-size: .75rem; }
 .kpi-sm .num { font-size: 1.35rem; }
+
+/* Onboarding nach der ersten Anmeldung (ohne Seitennavigation) */
+.onboarding-only { max-width: 860px; margin: 0 auto; padding: 2rem 1rem; }
