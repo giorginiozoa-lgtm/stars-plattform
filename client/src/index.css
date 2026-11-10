@@ -273,8 +273,10 @@ textarea { resize: vertical; min-height: 90px; }
 /* dropdown */
 .dropdown { position: relative; }
 .dropdown-menu {
-  position: absolute; right: 0; top: 110%; width: 320px; max-height: 400px; overflow-y: auto;
-  background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 30; padding: .4rem;
+  /* z-index muss ueber .backdrop (35) liegen, sonst faengt der Backdrop Klicks und Scrollen ab */
+  position: absolute; right: 0; top: 110%; width: 320px; max-width: calc(100vw - 2rem);
+  max-height: min(400px, 70vh); overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch;
+  background: #fff; border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-lg); z-index: 36; padding: .4rem;
 }
 .notif-item { padding: .6rem; border-radius: var(--radius-sm); cursor: pointer; }
 .notif-item:hover { background: #eef2f7; }
