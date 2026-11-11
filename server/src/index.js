@@ -25,6 +25,7 @@ import feedbackRoutes from './routes/feedback.js';
 import userRoutes from './routes/users.js';
 import analyticsRoutes from './routes/analytics.js';
 import presenceRoutes from './routes/presence.js';
+import translateRoutes from './routes/translate.js';
 import { startMailer } from './mailer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -74,6 +75,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/presence', presenceRoutes);
+app.use('/api/translate', translateRoutes);
 
 // In Produktion (nach `npm run build`) das gebaute Frontend ausliefern.
 const clientDist = join(__dirname, '..', '..', 'client', 'dist');

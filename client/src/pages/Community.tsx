@@ -5,7 +5,7 @@ import { useI18n, trx } from '../i18n';
 import { Avatar, Spinner, RoleBadge, timeAgo } from '../components';
 import type { Forum, Thread } from '../types';
 
-export default function Community() {
+export default function Community({ forumSlug }: { forumSlug?: string } = {}) {
   const { t, loc, locale } = useI18n();
   const nav = useNavigate();
   const [forums, setForums] = useState<Forum[] | null>(null);
@@ -16,11 +16,12 @@ export default function Community() {
   const [params, setParams] = useSearchParams();
   const tx = trx;
 
-  // Direkteinstieg «Frage stellen»: /community?forum=general&ask=1
+  // Direkteinstieg: /help (Seitenleiste «Allgemeine Fragen») bzw.
+  // «Frage stellen»: /help?ask=1 oder /community?forum=general&ask=1
   useEffect(() => {
     api.get<{ forums: Forum[] }>('/forums').then((r) => {
       setForums(r.forums);
-      const slug = params.get('forum');
+      const slug = forumSlug || params.get('forum');
       const f = slug && r.forums.find((x) => x.slug === slug);
       if (f) {
         openForum(f, params.get('ask') === '1');
@@ -50,7 +51,7 @@ export default function Community() {
   if (active) {
     return (
       <div>
-        <button className="btn-ghost" onClick={() => setActive(null)}>← {t('community.title')}</button>
+        <button className="btn-ghost" onClick={() => (forumSlug ? nav('/community') : setActive(null))}>← {t('community.title')}</button>
         <div className="page-head flex items-center">
           <div>
             <h1>{loc(active, 'title')}</h1>

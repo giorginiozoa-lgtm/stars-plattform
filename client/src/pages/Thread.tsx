@@ -4,6 +4,7 @@ import { api } from '../api';
 import { useI18n } from '../i18n';
 import { Avatar, Spinner, RoleBadge, timeAgo } from '../components';
 import type { Thread as Th, Comment } from '../types';
+import { TranslateButton, TranslatableText } from '../translate';
 
 export default function Thread() {
   const { id } = useParams();
@@ -12,6 +13,7 @@ export default function Thread() {
   const [thread, setThread] = useState<Th | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState('');
+  const [tr, setTr] = useState<string[] | null>(null); // [Titel, Text]
 
   async function load() {
     const r = await api.get<{ thread: Th; comments: Comment[] }>(`/forums/threads/${id}`);
@@ -32,7 +34,7 @@ export default function Thread() {
 
   return (
     <div>
-      <button className="btn-ghost" onClick={() => nav('/community')}>← {t('nav.community')}</button>
+      <button className="btn-ghost" onClick={() => (window.history.length > 1 ? nav(-1) : nav('/community'))}>← {t('nav.community')}</button>
       <div className="card mt-sm">
         <div className="post">
           <Avatar name={thread.author_name!} seed={thread.author_avatar} />
@@ -42,8 +44,9 @@ export default function Thread() {
               <RoleBadge role={thread.author_role!} />
               <span>· {timeAgo(thread.created_at, locale)}</span>
             </div>
-            <h1 style={{ fontSize: '1.4rem' }}>{thread.title}</h1>
-            <p style={{ whiteSpace: 'pre-wrap' }}>{thread.body}</p>
+            <h1 style={{ fontSize: '1.4rem' }}>{tr ? tr[0] : thread.title}</h1>
+            <p style={{ whiteSpace: 'pre-wrap' }}>{tr ? tr[1] : thread.body}</p>
+            <TranslateButton texts={[thread.title, thread.body]} translated={!!tr} onChange={setTr} />
           </div>
         </div>
       </div>
@@ -59,7 +62,7 @@ export default function Thread() {
                 <RoleBadge role={c.author_role} />
                 <span>· {timeAgo(c.created_at, locale)}</span>
               </div>
-              <div style={{ whiteSpace: 'pre-wrap' }}>{c.body}</div>
+              <TranslatableText text={c.body} />
             </div>
           </div>
         ))}

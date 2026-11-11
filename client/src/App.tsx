@@ -100,6 +100,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { user } = useAuth();
   const links = [
     { to: '/dashboard', ico: '▦', label: t('nav.dashboard') },
+    { to: '/help', ico: '❓', label: trx('Allgemeine Fragen', 'General questions') },
     { to: '/communities', ico: '◎', label: t('nav.communities') },
     { to: '/journey', ico: '➜', label: t('nav.journey') },
     { to: '/network', ico: '🤝', label: t('nav.network') },
@@ -165,6 +166,7 @@ function Layout() {
           <Routes>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/community" element={<Community />} />
+            <Route path="/help" element={<Community key="help" forumSlug="general" />} />
             <Route path="/community/thread/:id" element={<Thread />} />
             <Route path="/mentoring" element={<Mentoring />} />
             <Route path="/mentoring/question/:id" element={<QuestionDetail />} />

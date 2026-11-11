@@ -5,6 +5,7 @@ import { useAuth } from '../auth';
 import { useI18n, trx, lx } from '../i18n';
 import { Avatar, Spinner, TagPill, timeAgo } from '../components';
 import type { Question, Match, Community } from '../types';
+import { TranslatableText } from '../translate';
 import { CommunityCard } from './Communities';
 
 export default function QuestionDetail() {
@@ -53,7 +54,7 @@ export default function QuestionDetail() {
           <span className={`badge badge-${question.status} right`}>{t('mentoring.status.' + question.status)}</span>
         </div>
         <h1 className="mt-sm" style={{ fontSize: '1.4rem' }}>{question.title}</h1>
-        <p style={{ whiteSpace: 'pre-wrap' }}>{question.body}</p>
+        <TranslatableText text={question.body} style={{ margin: '1em 0 .3em' }} small={false} />
         <div className="flex wrap gap-sm">{question.tags?.map((tg) => <TagPill key={tg.id} tag={tg} />)}</div>
       </div>
 

@@ -7,6 +7,7 @@ import { useAuth } from '../auth';
 import { useI18n, dateLocale, lx, trx } from '../i18n';
 import { Avatar, RoleBadge, Spinner, timeAgo, useFocusTarget } from '../components';
 import type { Community, CommunitySession, CommunityPost, Role, Tag, SessionRequest } from '../types';
+import { TranslatableText } from '../translate';
 
 const SESSION_FORMAT: Record<string, { de: string; en: string }> = {
   peer_session: { de: 'Peer Session', en: 'Peer session' },
@@ -272,7 +273,7 @@ export function CommunityDetail() {
                 <Avatar name={p.author_name} seed={p.author_avatar} size="sm" />
                 <div className="body">
                   <div className="meta">{p.author_name} <RoleBadge role={p.author_role} /> · {timeAgo(p.created_at, locale)}</div>
-                  <div style={{ whiteSpace: 'pre-wrap' }}>{p.body}</div>
+                  <TranslatableText text={p.body} />
                 </div>
               </div>
             ))}

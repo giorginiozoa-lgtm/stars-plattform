@@ -132,7 +132,7 @@ export default function Dashboard() {
           <h3 style={{ marginTop: 0 }}>{tx('Hast du eine Frage?', 'Do you have a question?')}</h3>
           <p className="muted" style={{ marginTop: '-.3rem' }}>{tx('Stell sie im Forum «Allgemeine Fragen & Hilfe» – die Community und das stars-Team antworten.', 'Ask it in the forum “General questions & help” – the community and the stars team will answer.')}</p>
           <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
-            <Link className="btn btn-gold btn-sm" to="/community?forum=general&ask=1">{tx('Frage stellen', 'Ask a question')}</Link>
+            <Link className="btn btn-gold btn-sm" to="/help?ask=1">{tx('Frage stellen', 'Ask a question')}</Link>
             <Link className="btn btn-outline btn-sm" to="/mentoring">{tx('Fachfrage an Expert:innen', 'Specialist question to experts')}</Link>
           </div>
         </div>

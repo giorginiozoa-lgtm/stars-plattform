@@ -389,3 +389,7 @@ textarea { resize: vertical; min-height: 90px; }
 
 /* Onboarding nach der ersten Anmeldung (ohne Seitennavigation) */
 .onboarding-only { max-width: 860px; margin: 0 auto; padding: 2rem 1rem; }
+
+/* Uebersetzen-Knopf bei Inhalten der Nutzer:innen */
+.translate-btn { margin-top: .25rem; font-size: .75rem; padding: .1rem .4rem; }
+.bubble .translate-btn { color: inherit; opacity: .75; padding: 0; }

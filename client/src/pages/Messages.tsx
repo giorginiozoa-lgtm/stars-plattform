@@ -5,6 +5,7 @@ import { useAuth } from '../auth';
 import { useI18n, trx } from '../i18n';
 import { Avatar, Spinner, timeAgo, PresenceText } from '../components';
 import type { Conversation, Message, User } from '../types';
+import { TranslatableText } from '../translate';
 
 export default function Messages() {
   const { id } = useParams();
@@ -99,7 +100,7 @@ export default function Messages() {
               <div className="messages">
                 {messages.map((m) => (
                   <div key={m.id} className={`bubble ${m.sender_id === user!.id ? 'mine' : ''}`}>
-                    <div>{m.body}</div>
+                    {m.sender_id === user!.id ? <div>{m.body}</div> : <TranslatableText text={m.body} />}
                     <div className="t">{timeAgo(m.created_at, locale)}{m.sender_id === user!.id && <Ticks m={m} />}</div>
                   </div>
                 ))}

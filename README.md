@@ -157,6 +157,14 @@ Kategorien sie E-Mails erhält. Wer online ist oder die Benachrichtigung schon
 gelesen hat, bekommt keine E-Mail. Mehrere Benachrichtigungen werden pro Minute
 zu einer E-Mail gebündelt. Im Profil lässt sich eine Test-E-Mail auslösen.
 
+**Übersetzung von Beiträgen** (optional): Forenbeiträge, Kommentare,
+Community-Posts, Expertenfragen und empfangene Nachrichten haben einen Knopf
+«🌐 Übersetzen» (Zielsprache = eingestellte Sprache der lesenden Person). Mit
+`DEEPL_API_KEY=…` (DeepL, Free-Konto reicht) oder `GOOGLE_TRANSLATE_KEY=…`
+(Google Cloud, deckt alle 16 Sprachen ab) im Ausführungsbefehl übersetzt der
+Server; Ergebnisse werden zwischengespeichert. Ohne Schlüssel übersetzt Chrome
+direkt im Browser, sonst öffnet sich Google Translate in einem neuen Tab.
+
 **Freigabe neuer Konten:** Wer sich registriert, kann die Plattform erst nutzen,
 wenn stars das Konto unter **Registrierungen** (nur Admin) freigibt; dort lassen
 sich Konten auch ablehnen oder sperren. Für lokale Tests abschaltbar mit
