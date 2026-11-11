@@ -60,7 +60,7 @@ export default function Mentors() {
         {mentors.map((m) => (
           <div key={m.id} className="card">
             <div className="flex items-center gap">
-              <Avatar name={m.name} seed={m.avatar_seed} size="lg" />
+              <Avatar name={m.name} seed={m.avatar_seed} size="lg" online={m.online} />
               <div className="grow">
                 <b style={{ fontSize: '1.05rem' }}>{m.name}</b>
                 {m.role === 'entrepreneur' && <span className="badge badge-stage" style={{ marginLeft: '.4rem' }} title="Entrepreneur, teilt eigene Erfahrung">Peer</span>}

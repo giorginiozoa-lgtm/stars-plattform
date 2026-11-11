@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { api } from '../api';
-import { useI18n } from '../i18n';
+import { useI18n, trx } from '../i18n';
 import { Avatar, Spinner, RoleBadge, timeAgo } from '../components';
 import type { Forum, Thread } from '../types';
 
@@ -13,14 +13,25 @@ export default function Community() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', body: '' });
+  const [params, setParams] = useSearchParams();
+  const tx = trx;
 
+  // Direkteinstieg «Frage stellen»: /community?forum=general&ask=1
   useEffect(() => {
-    api.get<{ forums: Forum[] }>('/forums').then((r) => setForums(r.forums));
+    api.get<{ forums: Forum[] }>('/forums').then((r) => {
+      setForums(r.forums);
+      const slug = params.get('forum');
+      const f = slug && r.forums.find((x) => x.slug === slug);
+      if (f) {
+        openForum(f, params.get('ask') === '1');
+        setParams({}, { replace: true });
+      }
+    });
   }, []);
 
-  async function openForum(f: Forum) {
+  async function openForum(f: Forum, ask = false) {
     setActive(f);
-    setShowForm(false);
+    setShowForm(ask);
     const r = await api.get<{ threads: Thread[] }>(`/forums/${f.id}/threads`);
     setThreads(r.threads);
   }
@@ -45,17 +56,17 @@ export default function Community() {
             <h1>{loc(active, 'title')}</h1>
             <p>{loc(active, 'description')}</p>
           </div>
-          <button className="btn-gold right" onClick={() => setShowForm((s) => !s)}>{t('community.newThread')}</button>
+          <button className="btn-gold right" onClick={() => setShowForm((s) => !s)}>{active.slug === 'general' ? tx('Frage stellen', 'Ask a question') : t('community.newThread')}</button>
         </div>
 
         {showForm && (
           <form className="card" onSubmit={createThread}>
             <div className="field">
-              <label>{t('community.threadTitle')}</label>
-              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              <label>{active.slug === 'general' ? tx('Deine Frage in einem Satz', 'Your question in one sentence') : t('community.threadTitle')}</label>
+              <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required autoFocus={active.slug === 'general'} />
             </div>
             <div className="field">
-              <label>{t('community.threadBody')}</label>
+              <label>{active.slug === 'general' ? tx('Details (was hast du schon versucht, was brauchst du?)', 'Details (what have you tried, what do you need?)') : t('community.threadBody')}</label>
               <textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} required />
             </div>
             <button className="btn-gold" type="submit">{t('community.post')}</button>
@@ -91,7 +102,18 @@ export default function Community() {
         <h1>{t('community.title')}</h1>
         <p>{t('community.subtitle')}</p>
       </div>
-      <div className="grid grid-2">
+      <div className="card" style={{ background: 'var(--gold-soft)', borderColor: 'transparent' }}>
+        <b>{tx('Wo stelle ich meine Frage?', 'Where do I ask my question?')}</b>
+        <ul style={{ margin: '.4rem 0 .6rem', paddingLeft: '1.2rem' }}>
+          <li>{tx('Einfache Frage (zur Plattform, zu stars oder allgemein): im Forum «Allgemeine Fragen & Hilfe» – die Community und das stars-Team antworten.', 'Simple question (about the platform, stars or in general): in the forum “General questions & help” – the community and the stars team will answer.')}</li>
+          <li>{tx('Fachfrage, für die du eine passende Expert:in suchst:', 'Specialist question for which you need a suitable expert:')} <Link to="/mentoring">{t('nav.mentoring')}</Link></li>
+          <li>{tx('Längerfristige, strukturierte Begleitung durch stars:', 'Longer-term, structured support by stars:')} <Link to="/journey">Support Journey</Link></li>
+        </ul>
+        {forums.some((f) => f.slug === 'general') && (
+          <button className="btn-gold btn-sm" onClick={() => openForum(forums.find((f) => f.slug === 'general')!, true)}>{tx('Einfache Frage stellen', 'Ask a simple question')}</button>
+        )}
+      </div>
+      <div className="grid grid-2 mt">
         {forums.map((f) => (
           <div key={f.id} className="card card-hover" style={{ cursor: 'pointer' }} onClick={() => openForum(f)}>
             <h3>{loc(f, 'title')}</h3>

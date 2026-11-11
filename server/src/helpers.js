@@ -1,5 +1,6 @@
 // Gemeinsame Hilfsfunktionen fuer die Routen.
 import { db } from './db.js';
+import { isOnline } from './presence.js';
 
 // Gibt nur oeffentlich unbedenkliche Nutzerfelder zurueck (nie password_hash).
 export function publicUser(u) {
@@ -21,6 +22,9 @@ export function publicUser(u) {
     onboarded: !!u.onboarded_at || u.role === 'admin',
     status: u.status || 'active',
     can_view_analytics: !!u.can_view_analytics,
+    // Online-Status nur, wenn die Person ihn teilt (Einstellung im Profil).
+    online: u.show_online === 0 ? null : isOnline(u.last_seen_at),
+    last_seen_at: u.show_online === 0 ? null : u.last_seen_at ?? null,
   };
 }
 
@@ -35,7 +39,9 @@ export function userTags(userId) {
     .all(userId);
 }
 
-// Erstellt eine Benachrichtigung (Kann-Ziel Notification-Logik).
+// Erstellt eine Benachrichtigung (Kann-Ziel Notification-Logik). Ob zusaetzlich
+// eine E-Mail verschickt wird, entscheidet der Sweeper in mailer.js anhand der
+// Einstellungen der Empfaenger:in.
 export function notify(userId, { type, title, body = null, link = null }) {
   db.prepare(
     `INSERT INTO notifications (user_id, type, title, body, link) VALUES (?, ?, ?, ?, ?)`

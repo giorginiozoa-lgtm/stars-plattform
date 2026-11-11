@@ -1,7 +1,7 @@
 // Kleine, wiederverwendbare Praesentationskomponenten.
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useI18n, LANGUAGES } from './i18n';
+import { useI18n, LANGUAGES, trx } from './i18n';
 import type { Tag, Role } from './types';
 
 // Deterministische Farbe aus einem Seed (fuer Avatare ohne Bild-Upload).
@@ -20,9 +20,9 @@ function initials(name: string): string {
     .join('');
 }
 
-export function Avatar({ name, seed, size = '' }: { name: string; seed?: string; size?: '' | 'lg' | 'sm' }) {
+export function Avatar({ name, seed, size = '', online }: { name: string; seed?: string; size?: '' | 'lg' | 'sm'; online?: boolean | null }) {
   const s = seed || name;
-  return (
+  const av = (
     <div
       className={`avatar ${size ? 'avatar-' + size : ''}`}
       style={{ background: seedColor(s) }}
@@ -32,6 +32,21 @@ export function Avatar({ name, seed, size = '' }: { name: string; seed?: string;
       {initials(name)}
     </div>
   );
+  if (!online) return av;
+  return (
+    <span className="avatar-wrap">
+      {av}
+      <span className="online-dot" title="online" />
+    </span>
+  );
+}
+
+// «online» bzw. «zuletzt online vor …» (wie bei Messenger-Apps).
+export function PresenceText({ user }: { user: { online?: boolean | null; last_seen_at?: string | null } }) {
+  const { locale } = useI18n();
+  if (user.online) return <small className="presence on">● online</small>;
+  if (!user.last_seen_at) return null;
+  return <small className="presence">{trx('zuletzt online', 'last seen')} {timeAgo(user.last_seen_at, locale)}</small>;
 }
 
 export function RoleBadge({ role }: { role: Role }) {

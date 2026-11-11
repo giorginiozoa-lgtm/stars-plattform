@@ -24,11 +24,14 @@ import eventRoutes from './routes/events.js';
 import feedbackRoutes from './routes/feedback.js';
 import userRoutes from './routes/users.js';
 import analyticsRoutes from './routes/analytics.js';
+import presenceRoutes from './routes/presence.js';
+import { startMailer } from './mailer.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 initSchema();
 ensureEemCases2026();
+startMailer();
 
 const app = express();
 app.use(cors());
@@ -70,6 +73,7 @@ app.use('/api/events', eventRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/presence', presenceRoutes);
 
 // In Produktion (nach `npm run build`) das gebaute Frontend ausliefern.
 const clientDist = join(__dirname, '..', '..', 'client', 'dist');

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, NavLink, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from './auth';
-import { useI18n } from './i18n';
+import { useI18n, trx } from './i18n';
 import { api } from './api';
 import { Avatar, Spinner, timeAgo, LanguageToggle } from './components';
 import type { Notification } from './types';
@@ -41,10 +41,14 @@ function NotificationBell() {
       setUnread(r.unread);
     } catch { /* offline: ignore */ }
   }
+  // Sanftes Polling (kein WebSocket noetig). Nur bei sichtbarem Tab: die
+  // Abfrage zaehlt zugleich als «online» und stellt Nachrichten zu (✓✓).
   useEffect(() => {
     load();
-    const id = setInterval(load, 20000); // sanftes Polling (kein WebSocket noetig)
-    return () => clearInterval(id);
+    const id = setInterval(() => { if (!document.hidden) load(); }, 20000);
+    const onVis = () => { if (!document.hidden) load(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
   }, []);
 
   async function openItem(n: Notification) {
@@ -70,6 +74,8 @@ function NotificationBell() {
             <div className="flex items-center" style={{ padding: '.4rem .6rem' }}>
               <b>{t('notif.title')}</b>
               <button className="btn-ghost btn-sm right" onClick={markAll}>{t('notif.markAll')}</button>
+              <button className="btn-ghost btn-sm" title={trx('E-Mail-Benachrichtigungen einstellen', 'Email notification settings')}
+                onClick={() => { setOpen(false); nav('/profile#notifications'); }}>⚙</button>
             </div>
             {items.length === 0 && <p className="muted" style={{ padding: '.6rem' }}>{t('notif.empty')}</p>}
             {items.map((n) => (

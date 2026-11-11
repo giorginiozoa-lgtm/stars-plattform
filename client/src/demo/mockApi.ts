@@ -139,6 +139,13 @@ function save() {
 // ---------------------------------------------------------------------------
 const PW = 'stars1234';
 
+// Ort fuer einfache Fragen (wie server/src/db.js GENERAL_FORUM).
+const GENERAL_FORUM: [string, string, string, string, string] = [
+  'general', 'Allgemeine Fragen & Hilfe', 'General questions & help',
+  'Hier kannst du jede einfache Frage stellen – zur Plattform, zu stars oder zu deinem Vorhaben. Die Community und das stars-Team antworten.',
+  'Ask any simple question here – about the platform, stars or your venture. The community and the stars team will answer.',
+];
+
 function seed() {
   S = {
     users: [], tags: [], user_tags: [], forums: [], threads: [], comments: [],
@@ -291,6 +298,7 @@ function seed() {
 
   // 3) Foren + Threads + Kommentare -------------------------------------
   const forumData: [string, string, string, string, string][] = [
+    GENERAL_FORUM,
     ['scaling', 'Skalierung & Wachstum', 'Scaling & Growth',
       'Von der Traktion zum Wachstum: Prozesse, Teams, Märkte.', 'From traction to growth.'],
     ['financing', 'Finanzierung & Fundraising', 'Financing & Fundraising',
@@ -305,7 +313,7 @@ function seed() {
   const forumId: Record<string, number> = {};
   forumData.forEach(([slug, tde, ten, dde, den], i) => {
     const id = nextId('forums');
-    S.forums.push({ id, slug, title_de: tde, title_en: ten, description_de: dde, description_en: den, sort_order: i });
+    S.forums.push({ id, slug, title_de: tde, title_en: ten, description_de: dde, description_en: den, sort_order: i - 1 });
     forumId[slug] = id;
   });
 
@@ -1055,7 +1063,23 @@ function publicUser(u: Row | undefined | null) {
     onboarded: u.onboarded_at !== null || u.role === 'admin',
     status: u.status || 'active',
     can_view_analytics: !!u.can_view_analytics,
+    online: u.show_online === 0 ? null : isOnline(u),
+    last_seen_at: u.show_online === 0 ? null : u.last_seen_at ?? null,
   };
+}
+
+// Online-Status (wie server/src/presence.js). In der Demo gelten einige
+// Personas als dauerhaft online, damit Punkt und Haekchen sichtbar werden.
+function isOnline(u: Row) {
+  if (u.demo_online) return true;
+  if (!u.last_seen_at) return false;
+  return Date.now() - new Date(String(u.last_seen_at).replace(' ', 'T') + 'Z').getTime() < 70_000;
+}
+function touchPresence(uid: number) {
+  const u = findUser(uid);
+  if (u) u.last_seen_at = now();
+  const convIds = new Set(S.conversations.filter((c) => c.user_low === uid || c.user_high === uid).map((c) => c.id));
+  for (const m of S.messages) if (!m.delivered_at && m.sender_id !== uid && convIds.has(m.conversation_id)) m.delivered_at = now();
 }
 
 // Verknuepfungstabellen liefert SQLite ueber den zusammengesetzten Primaerschluessel,
@@ -1656,6 +1680,11 @@ on('POST', '/forums/:id/threads', true, ({ params, body, user }) => {
     title, body: text, created_at: now(),
   };
   S.threads.push(thread);
+  if (forum.slug === 'general') {
+    for (const a of S.users.filter((u) => u.role === 'admin' && u.id !== user!.id)) {
+      notify(a.id, { type: 'comment', title: 'Neue Frage im Forum', body: `${user!.name}: "${title}"`, link: `/community/thread/${thread.id}` });
+    }
+  }
   return { status: 201, data: { thread } };
 });
 
@@ -1816,10 +1845,11 @@ on('POST', '/messages/:id/messages', true, ({ params, body, user }) => {
   if (!conv || (conv.user_low !== uid && conv.user_high !== uid)) throw new HttpError(404, 'Konversation nicht gefunden');
   const message = {
     id: nextId('messages'), conversation_id: conv.id, sender_id: uid,
-    body: body.body, read_at: null, created_at: now(),
+    body: body.body, delivered_at: null as string | null, read_at: null, created_at: now(),
   };
   S.messages.push(message);
   const otherId = conv.user_low === uid ? conv.user_high : conv.user_low;
+  if (isOnline(findUser(otherId)!)) message.delivered_at = now();
   notify(otherId, {
     type: 'message',
     title: `Neue Nachricht von ${user!.name}`,
@@ -1837,6 +1867,15 @@ on('GET', '/messages/:id', true, ({ params, user }) => {
 
   for (const m of S.messages) {
     if (m.conversation_id === conv.id && m.sender_id !== uid && !m.read_at) m.read_at = now();
+  }
+  // Demo: eine «online»-Persona liest neue Nachrichten nach wenigen Sekunden (blaue ✓✓).
+  if (findUser(otherId)?.demo_online) {
+    for (const m of S.messages) {
+      if (m.conversation_id === conv.id && m.sender_id === uid && !m.read_at && Date.now() - new Date(m.created_at.replace(' ', 'T') + 'Z').getTime() > 4000) {
+        m.delivered_at = m.delivered_at || now();
+        m.read_at = now();
+      }
+    }
   }
   const messages = S.messages.filter((m) => m.conversation_id === conv.id).sort((a, b) => a.id - b.id);
   return { partner: publicUser(findUser(otherId)), messages };
@@ -2078,6 +2117,41 @@ on('POST', '/notifications/read-all', true, ({ user }) => {
   for (const n of S.notifications) if (n.user_id === user!.id && !n.read_at) n.read_at = now();
   return { ok: true };
 });
+
+// E-Mail-Benachrichtigungen (wie server/src/mailer.js); die Demo verschickt keine E-Mails.
+const MAIL_KEYS = ['messages', 'forum', 'questions', 'journey', 'communities', 'network', 'events', 'account'];
+function prefsResponse(uid: number) {
+  const u = findUser(uid)!;
+  const p = u.email_prefs || {};
+  const categories: Record<string, boolean> = {};
+  for (const k of MAIL_KEYS) categories[k] = typeof p.categories?.[k] === 'boolean' ? p.categories[k] : k !== 'communities';
+  return {
+    email: u.email, mail_configured: false,
+    prefs: { enabled: typeof p.enabled === 'boolean' ? p.enabled : true, categories },
+    show_online: u.show_online !== 0,
+  };
+}
+on('GET', '/notifications/preferences', true, ({ user }) => prefsResponse(user!.id));
+on('PUT', '/notifications/preferences', true, ({ user, body }) => {
+  const u = findUser(user!.id)!;
+  const cur = prefsResponse(u.id).prefs;
+  const inp = body?.prefs || {};
+  u.email_prefs = {
+    enabled: typeof inp.enabled === 'boolean' ? inp.enabled : cur.enabled,
+    categories: { ...cur.categories, ...Object.fromEntries(MAIL_KEYS.filter((k) => typeof inp.categories?.[k] === 'boolean').map((k) => [k, inp.categories[k]])) },
+  };
+  if (typeof body?.show_online === 'boolean') u.show_online = body.show_online ? 1 : 0;
+  return prefsResponse(u.id);
+});
+on('POST', '/notifications/preferences/test', true, () => {
+  throw new HttpError(400, 'In der Demo werden keine E-Mails verschickt.');
+});
+
+on('GET', '/presence/online', true, ({ user }) => ({
+  users: S.users
+    .filter((u) => u.id !== user!.id && (u.status || 'active') === 'active' && u.show_online !== 0 && isOnline(u))
+    .map(publicUser),
+}));
 
 on('POST', '/notifications/:id/read', true, ({ params, user }) => {
   const n = S.notifications.find((x) => x.id === Number(params.id) && x.user_id === user!.id);
@@ -3324,6 +3398,7 @@ async function handle(method: string, rawPath: string, init: RequestInit | undef
       if (!acc) return jsonResponse({ error: 'Konto nicht gefunden' }, 401);
       const st = acc.status || 'active';
       if (st !== 'active') return jsonResponse({ error: statusMessage(st), code: st }, 403);
+      touchPresence(acc.id);
     }
 
     const params: Record<string, string> = {};
@@ -3343,6 +3418,20 @@ async function handle(method: string, rawPath: string, init: RequestInit | undef
     }
   }
   return jsonResponse({ error: 'Endpunkt nicht gefunden' }, 404);
+}
+
+// Iteration 4: allgemeines Fragen-Forum (auch in gespeicherten Demo-Daten) und
+// einige dauerhaft «online» Personas fuer die Vorfuehrung des Online-Status.
+function ensureIteration4() {
+  if (!S.forums.some((f) => f.slug === 'general')) {
+    const [slug, tde, ten, dde, den] = GENERAL_FORUM;
+    S.forums.push({ id: nextId('forums'), slug, title_de: tde, title_en: ten, description_de: dde, description_en: den, sort_order: -1 });
+  }
+  for (const email of ['anna.keller@example.com', 'marco.rossi@example.com', 'vedika.murarka@example.com']) {
+    const u = S.users.find((x) => x.email === email);
+    if (u && u.demo_online === undefined) u.demo_online = true;
+  }
+  save();
 }
 
 // Smoke Test H11 (wie server/src/db.js): Praxisaustausch bei Alumni-Unternehmen,
@@ -3373,6 +3462,7 @@ export function installMockApi() {
   }
   if (!ok) seed();
   else ensureExchangePilot();
+  ensureIteration4();
 
   const originalFetch = window.fetch.bind(window);
   window.fetch = ((input: any, init?: RequestInit) => {

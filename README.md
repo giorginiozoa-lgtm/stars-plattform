@@ -148,6 +148,15 @@ Update nach einem Push: im Dashboard der Website auf **Build** klicken (holt den
 neuen Stand von GitHub, baut und startet neu). Welche Version läuft, zeigt
 `/api/health` im Feld `commit`. Die Demo-Konten (`@example.com`) sind dort gesperrt.
 
+**E-Mail-Benachrichtigungen** (optional): Ein Postfach für den Versand anlegen
+(z. B. `noreply@the-stars.ch`) und im Ausführungsbefehl ergänzen:
+`SMTP_HOST=… SMTP_PORT=465 SMTP_USER=noreply@the-stars.ch SMTP_PASS=… MAIL_FROM="stars <noreply@the-stars.ch>"`
+(für STARTTLS auf Port 587 zusätzlich `SMTP_SECURE=false`). Ohne diese Werte
+bleibt der Versand aus. Jede Person legt im Profil fest, für welche
+Kategorien sie E-Mails erhält. Wer online ist oder die Benachrichtigung schon
+gelesen hat, bekommt keine E-Mail. Mehrere Benachrichtigungen werden pro Minute
+zu einer E-Mail gebündelt. Im Profil lässt sich eine Test-E-Mail auslösen.
+
 **Freigabe neuer Konten:** Wer sich registriert, kann die Plattform erst nutzen,
 wenn stars das Konto unter **Registrierungen** (nur Admin) freigibt; dort lassen
 sich Konten auch ablehnen oder sperren. Für lokale Tests abschaltbar mit

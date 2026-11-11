@@ -475,10 +475,35 @@ export function initSchema() {
     db.exec('ALTER TABLE users ADD COLUMN onboarded_at TEXT');
     db.exec(`UPDATE users SET onboarded_at = datetime('now') WHERE status != 'pending'`);
   }
+  // Iteration 4: E-Mail-Benachrichtigungen (Einstellungen je Kategorie),
+  // Online-Status und Zustellbestaetigung von Direktnachrichten.
+  addColumnIfMissing('users', 'email_prefs', 'TEXT');                        // JSON, siehe mailer.js
+  addColumnIfMissing('users', 'last_seen_at', 'TEXT');                       // letzte Aktivitaet (Online-Status)
+  addColumnIfMissing('users', 'show_online', 'INTEGER NOT NULL DEFAULT 1');  // Online-Status fuer andere sichtbar
+  addColumnIfMissing('messages', 'delivered_at', 'TEXT');                    // Nachricht beim Gegenueber angekommen
+  addColumnIfMissing('notifications', 'emailed_at', 'TEXT');                 // E-Mail zu dieser Benachrichtigung versandt
+  ensureGeneralForum();
   extendSessionFormats();
   renameDemoPersona();
   extendEventKinds();
   ensureExchangePilot();
+}
+
+// Ort fuer einfache Fragen: ein allgemeines Forum, das vor den Themenforen
+// erscheint. Bestehende Datenbanken erhalten es einmalig (idempotent).
+export const GENERAL_FORUM = {
+  slug: 'general',
+  title_de: 'Allgemeine Fragen & Hilfe',
+  title_en: 'General questions & help',
+  description_de: 'Hier kannst du jede einfache Frage stellen – zur Plattform, zu stars oder zu deinem Vorhaben. Die Community und das stars-Team antworten.',
+  description_en: 'Ask any simple question here – about the platform, stars or your venture. The community and the stars team will answer.',
+};
+function ensureGeneralForum() {
+  const f = GENERAL_FORUM;
+  db.prepare(
+    `INSERT INTO forums (slug, title_de, title_en, description_de, description_en, sort_order)
+     VALUES (?, ?, ?, ?, ?, -1) ON CONFLICT(slug) DO NOTHING`
+  ).run(f.slug, f.title_de, f.title_en, f.description_de, f.description_en);
 }
 
 // Der Beispielfall der dritten Iteration hiess zunaechst «Sunita Rai» (fiktive

@@ -131,6 +131,20 @@ textarea { resize: vertical; min-height: 90px; }
 }
 .avatar-lg { width: 64px; height: 64px; font-size: 1.4rem; }
 .avatar-sm { width: 30px; height: 30px; font-size: .75rem; }
+.avatar-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+.online-dot { position: absolute; right: 0; bottom: 0; width: 28%; height: 28%; min-width: 9px; min-height: 9px;
+  border-radius: 50%; background: #22c55e; border: 2px solid #fff; box-sizing: border-box; }
+.presence { color: var(--muted, #6b7280); }
+.presence.on { color: #16a34a; }
+/* Zustellstatus eigener Nachrichten: ✓ gesendet, ✓✓ zugestellt, blaues ✓✓ gelesen */
+.ticks { margin-left: .3rem; letter-spacing: -.25em; font-size: .8rem; opacity: .75; }
+.ticks.read { color: #38bdf8; opacity: 1; }
+.online-list { display: flex; flex-wrap: wrap; gap: .5rem; }
+.online-chip { display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .6rem .3rem .3rem;
+  border: 1px solid var(--border); border-radius: 999px; background: #fff; cursor: pointer; font-size: .85rem; }
+.online-chip:hover { background: #eef2f7; }
+.switch-row { display: flex; align-items: center; gap: .5rem; padding: .3rem 0; cursor: pointer; }
+.switch-row input { width: auto; margin: 0; }
 
 /* ---------- App layout ---------- */
 .app { display: flex; min-height: 100%; }

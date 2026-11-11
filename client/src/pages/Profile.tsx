@@ -202,6 +202,95 @@ export default function Profile() {
         <button className="btn-gold mt" onClick={saveTags}>{t('common.save')}</button>
         {saved && <span className="badge badge-resolved" style={{ marginLeft: '.6rem' }}>{saved}</span>}
       </div>
+
+      <NotificationSettings />
+    </div>
+  );
+}
+
+// E-Mail-Benachrichtigungen je Kategorie und Sichtbarkeit des Online-Status.
+const MAIL_CATEGORIES: { key: string; label: { de: string; en: string } }[] = [
+  { key: 'messages', label: { de: 'Direktnachrichten', en: 'Direct messages' } },
+  { key: 'forum', label: { de: 'Foren: Antworten auf meine Beiträge und neue Fragen', en: 'Forums: replies to my posts and new questions' } },
+  { key: 'questions', label: { de: 'Expertenfragen und Matching', en: 'Expert questions and matching' } },
+  { key: 'journey', label: { de: 'Support Journey', en: 'Support Journey' } },
+  { key: 'communities', label: { de: 'Communities und Sessions', en: 'Communities and sessions' } },
+  { key: 'network', label: { de: 'Netzwerk und Intros', en: 'Network and intros' } },
+  { key: 'events', label: { de: 'Veranstaltungen und Förderplätze', en: 'Events and funded places' } },
+  { key: 'account', label: { de: 'Konto, Feedback und Administration', en: 'Account, feedback and administration' } },
+];
+
+interface NotifPrefs {
+  email: string;
+  mail_configured: boolean;
+  prefs: { enabled: boolean; categories: Record<string, boolean> };
+  show_online: boolean;
+}
+
+function NotificationSettings() {
+  const tx = trx;
+  const [p, setP] = useState<NotifPrefs | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    api.get<NotifPrefs>('/notifications/preferences').then((r) => {
+      setP(r);
+      if (location.hash === '#notifications') setTimeout(() => document.getElementById('notifications')?.scrollIntoView({ behavior: 'smooth' }), 50);
+    });
+  }, []);
+
+  async function save(body: Partial<{ prefs: Partial<NotifPrefs['prefs']>; show_online: boolean }>) {
+    const r = await api.put<NotifPrefs>('/notifications/preferences', body);
+    setP(r);
+    setMsg({ ok: true, text: tx('Gespeichert', 'Saved') });
+    setTimeout(() => setMsg(null), 2000);
+  }
+  async function test() {
+    try {
+      const r = await api.post<{ email: string }>('/notifications/preferences/test');
+      setMsg({ ok: true, text: `${tx('Test-E-Mail verschickt an', 'Test email sent to')} ${r.email}` });
+    } catch (e: any) {
+      setMsg({ ok: false, text: e.message });
+    }
+  }
+
+  if (!p) return null;
+  return (
+    <div className="card mt" id="notifications">
+      <h3>{tx('Benachrichtigungen per E-Mail', 'Email notifications')}</h3>
+      <p className="muted" style={{ marginTop: '-.4rem' }}>{tx(
+        'Wähle, wofür du eine E-Mail erhalten möchtest. Bist du gerade online oder hast du die Benachrichtigung schon in der App gelesen, kommt keine E-Mail. Mehrere Benachrichtigungen werden zusammengefasst.',
+        'Choose what you want to receive an email for. If you are online or have already read the notification in the app, no email is sent. Several notifications are combined into one email.'
+      )}</p>
+      {!p.mail_configured && (
+        <p className="badge badge-stage" style={{ whiteSpace: 'normal' }}>{tx(
+          'Hinweis: Der E-Mail-Versand ist auf diesem Server noch nicht eingerichtet. Deine Auswahl wird trotzdem gespeichert.',
+          'Note: email delivery is not yet set up on this server. Your choice is saved anyway.'
+        )}</p>
+      )}
+      <label className="switch-row">
+        <input type="checkbox" checked={p.prefs.enabled} onChange={(e) => save({ prefs: { enabled: e.target.checked } })} />
+        <b>{tx('E-Mail-Benachrichtigungen erhalten an', 'Receive email notifications at')} {p.email}</b>
+      </label>
+      <div style={{ paddingLeft: '1.4rem', opacity: p.prefs.enabled ? 1 : 0.5 }}>
+        {MAIL_CATEGORIES.map((c) => (
+          <label key={c.key} className="switch-row">
+            <input type="checkbox" disabled={!p.prefs.enabled} checked={!!p.prefs.categories[c.key]}
+              onChange={(e) => save({ prefs: { categories: { [c.key]: e.target.checked } } })} />
+            {lx(c.label)}
+          </label>
+        ))}
+      </div>
+      {p.mail_configured && p.prefs.enabled && (
+        <button className="btn-outline btn-sm mt-sm" onClick={test}>{tx('Test-E-Mail senden', 'Send test email')}</button>
+      )}
+
+      <h3 className="mt">{tx('Online-Status', 'Online status')}</h3>
+      <label className="switch-row">
+        <input type="checkbox" checked={p.show_online} onChange={(e) => save({ show_online: e.target.checked })} />
+        {tx('Anderen zeigen, wann ich online bin (grüner Punkt, «zuletzt online»)', 'Show others when I am online (green dot, “last seen”)')}
+      </label>
+      {msg && <span className={`badge ${msg.ok ? 'badge-resolved' : 'badge-gold'}`} style={{ marginTop: '.4rem' }}>{msg.text}</span>}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 // Demonstrationsinhalte des Prototyps, KEINE empirischen Erhebungsdaten.
 //
 // Ausfuehren:  npm run seed        (im Ordner /server oder via Root-Script)
-import { db, initSchema, orderPair, ensureExchangePilot } from './db.js';
+import { db, initSchema, orderPair, ensureExchangePilot, GENERAL_FORUM } from './db.js';
 import { hashPassword } from './auth.js';
 import { computeMatches } from './matching.js';
 import { ensureEemCases2026 } from './eemCases.js';
@@ -169,6 +169,7 @@ console.log(`  ${1 + mentors.length + entrepreneurs.length} Nutzer:innen`);
 // 3) Foren + Threads + Kommentare (Saeule 1: Community)
 // ---------------------------------------------------------------------------
 const forumData = [
+  ['general', GENERAL_FORUM.title_de, GENERAL_FORUM.title_en, GENERAL_FORUM.description_de, GENERAL_FORUM.description_en],
   ['scaling', 'Skalierung & Wachstum', 'Scaling & Growth',
     'Von der Traktion zum Wachstum: Prozesse, Teams, Märkte.', 'From traction to growth.'],
   ['financing', 'Finanzierung & Fundraising', 'Financing & Fundraising',
@@ -185,7 +186,7 @@ const insForum = db.prepare(
 );
 const forumId = {};
 forumData.forEach(([slug, tde, ten, dde, den], i) => {
-  forumId[slug] = Number(insForum.run(slug, tde, ten, dde, den, i).lastInsertRowid);
+  forumId[slug] = Number(insForum.run(slug, tde, ten, dde, den, i - 1).lastInsertRowid);
 });
 
 const insThread = db.prepare(

@@ -3,6 +3,7 @@
 import { scryptSync, randomBytes, timingSafeEqual } from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { db } from './db.js';
+import { touchPresence } from './presence.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'stars-mvp-dev-secret-change-me';
 const TOKEN_TTL = '7d';
@@ -46,6 +47,7 @@ export function authRequired(req, res, next) {
   const row = db.prepare('SELECT status FROM users WHERE id = ?').get(req.user.id);
   if (!row) return res.status(401).json({ error: 'Konto nicht gefunden' });
   if (row.status !== 'active') return res.status(403).json({ error: statusMessage(row.status), code: row.status });
+  try { touchPresence(req.user.id); } catch { /* Online-Status ist nicht kritisch */ }
   next();
 }
 

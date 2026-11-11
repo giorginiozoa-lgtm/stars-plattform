@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { useI18n } from '../i18n';
-import { Avatar, Spinner, timeAgo } from '../components';
+import { useI18n, trx } from '../i18n';
+import { Avatar, Spinner, timeAgo, PresenceText } from '../components';
 import type { Conversation, Message, User } from '../types';
 
 export default function Messages() {
@@ -27,14 +27,31 @@ export default function Messages() {
     setMessages(r.messages);
   }
 
-  useEffect(() => { loadConvs(); }, []);
+  // Konversationsliste (Online-Punkte, ungelesene) regelmaessig auffrischen.
+  useEffect(() => {
+    loadConvs();
+    const t = setInterval(() => { if (!document.hidden) loadConvs(); }, 15000);
+    return () => clearInterval(t);
+  }, []);
+  // Offene Konversation: kurzes Polling, nur solange der Tab sichtbar ist –
+  // sonst wuerden Nachrichten als «gelesen» markiert, obwohl niemand hinschaut.
   useEffect(() => {
     if (!id) { setPartner(null); setMessages([]); return; }
     loadThread(id);
-    const t = setInterval(() => loadThread(id), 8000); // sanftes Polling
-    return () => clearInterval(t);
+    const t = setInterval(() => { if (!document.hidden) loadThread(id); }, 4000);
+    const onVis = () => { if (!document.hidden) loadThread(id); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(t); document.removeEventListener('visibilitychange', onVis); };
   }, [id]);
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+  const lastId = messages.length ? messages[messages.length - 1].id : 0;
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [lastId]);
+
+  // ✓ gesendet · ✓✓ zugestellt · blaues ✓✓ gelesen
+  function Ticks({ m }: { m: Message }) {
+    if (m.read_at) return <span className="ticks read" title={`${trx('Gelesen', 'Read')} ${timeAgo(m.read_at, locale)}`}>✓✓</span>;
+    if (m.delivered_at) return <span className="ticks" title={trx('Zugestellt', 'Delivered')}>✓✓</span>;
+    return <span className="ticks" title={trx('Gesendet', 'Sent')}>✓</span>;
+  }
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
@@ -55,7 +72,7 @@ export default function Messages() {
           {convs.length === 0 && <p className="muted" style={{ padding: '.6rem' }}>{t('messages.empty')}</p>}
           {convs.map((c) => (
             <div key={c.id} className={`conv ${String(c.id) === id ? 'active' : ''}`} onClick={() => nav(`/messages/${c.id}`)}>
-              <Avatar name={c.partner.name} seed={c.partner.avatar_seed} />
+              <Avatar name={c.partner.name} seed={c.partner.avatar_seed} online={c.partner.online} />
               <div className="grow" style={{ minWidth: 0 }}>
                 <div className="flex items-center gap-sm">
                   <b className="clamp" style={{ fontSize: '.9rem' }}>{c.partner.name}</b>
@@ -73,17 +90,17 @@ export default function Messages() {
           ) : (
             <>
               <div className="flex items-center gap-sm" style={{ padding: '.8rem 1rem', borderBottom: '1px solid var(--border)' }}>
-                <Avatar name={partner.name} seed={partner.avatar_seed} size="sm" />
+                <Avatar name={partner.name} seed={partner.avatar_seed} size="sm" online={partner.online} />
                 <div>
                   <b>{partner.name}</b>
-                  <div><small className="muted">{partner.headline}</small></div>
+                  <div>{partner.online || partner.last_seen_at ? <PresenceText user={partner} /> : <small className="muted">{partner.headline}</small>}</div>
                 </div>
               </div>
               <div className="messages">
                 {messages.map((m) => (
                   <div key={m.id} className={`bubble ${m.sender_id === user!.id ? 'mine' : ''}`}>
                     <div>{m.body}</div>
-                    <div className="t">{timeAgo(m.created_at, locale)}</div>
+                    <div className="t">{timeAgo(m.created_at, locale)}{m.sender_id === user!.id && <Ticks m={m} />}</div>
                   </div>
                 ))}
                 <div ref={endRef} />

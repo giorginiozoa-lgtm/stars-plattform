@@ -45,6 +45,12 @@ router.post('/:id/threads', authRequired, (req, res) => {
     .prepare('INSERT INTO threads (forum_id, author_id, title, body) VALUES (?, ?, ?, ?)')
     .run(req.params.id, req.user.id, title, body);
   const thread = db.prepare('SELECT * FROM threads WHERE id = ?').get(info.lastInsertRowid);
+  // Neue Frage im allgemeinen Forum: das stars-Team erfaehrt davon und kann antworten.
+  if (forum.slug === 'general') {
+    for (const a of db.prepare(`SELECT id FROM users WHERE role = 'admin' AND id != ?`).all(req.user.id)) {
+      notify(a.id, { type: 'comment', title: 'Neue Frage im Forum', body: `${req.user.name}: "${title}"`, link: `/community/thread/${thread.id}` });
+    }
+  }
   res.status(201).json({ thread });
 });
 

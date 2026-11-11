@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { useI18n, lx, trx } from '../i18n';
-import { Spinner } from '../components';
+import { Spinner, Avatar } from '../components';
 import { STEP_LABEL, PROGRESS_LABEL } from '../journey';
 import { Stepper } from './Journey';
-import type { Step } from '../types';
+import type { Step, User } from '../types';
 
 interface DashData {
   role: string;
@@ -22,6 +22,37 @@ interface DashData {
   };
   network?: Record<string, number>;
   journey?: { case_id: number; step: Step; needs: { id: number; goal: string; status: string; priority_rank: number; review_date: string | null }[] } | null;
+}
+
+// Wer ist gerade online? Klick oeffnet direkt den Chat.
+function OnlineNow() {
+  const nav = useNavigate();
+  const [users, setUsers] = useState<User[] | null>(null);
+  useEffect(() => {
+    const load = () => { if (!document.hidden) api.get<{ users: User[] }>('/presence/online').then((r) => setUsers(r.users)).catch(() => {}); };
+    load();
+    const id = setInterval(load, 30000);
+    return () => clearInterval(id);
+  }, []);
+  async function chat(u: User) {
+    const r = await api.post<{ conversationId: number }>(`/messages/with/${u.id}`);
+    nav(`/messages/${r.conversationId}`);
+  }
+  if (!users) return null;
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}><span style={{ color: '#22c55e' }}>●</span> {trx('Jetzt online', 'Online now')} ({users.length})</h3>
+      {users.length === 0
+        ? <p className="muted" style={{ margin: 0 }}>{trx('Gerade ist niemand sonst online.', 'Nobody else is online right now.')}</p>
+        : <div className="online-list">
+            {users.map((u) => (
+              <button key={u.id} className="online-chip" onClick={() => chat(u)} title={trx('Nachricht schreiben', 'Send a message')}>
+                <Avatar name={u.name} seed={u.avatar_seed} size="sm" online />{u.name}
+              </button>
+            ))}
+          </div>}
+    </div>
+  );
 }
 
 function Kpi({ num, label, accent }: { num: number; label: string; accent?: boolean }) {
@@ -94,6 +125,18 @@ export default function Dashboard() {
       <div className="page-head">
         <h1>{t('dash.welcome')}, {user!.name.split(' ')[0]} 👋</h1>
         <p>{t('dash.title')} · {t('role.' + user!.role)}</p>
+      </div>
+
+      <div className="grid grid-2">
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>{tx('Hast du eine Frage?', 'Do you have a question?')}</h3>
+          <p className="muted" style={{ marginTop: '-.3rem' }}>{tx('Stell sie im Forum «Allgemeine Fragen & Hilfe» – die Community und das stars-Team antworten.', 'Ask it in the forum “General questions & help” – the community and the stars team will answer.')}</p>
+          <div className="flex gap-sm" style={{ flexWrap: 'wrap' }}>
+            <Link className="btn btn-gold btn-sm" to="/community?forum=general&ask=1">{tx('Frage stellen', 'Ask a question')}</Link>
+            <Link className="btn btn-outline btn-sm" to="/mentoring">{tx('Fachfrage an Expert:innen', 'Specialist question to experts')}</Link>
+          </div>
+        </div>
+        <OnlineNow />
       </div>
 
       {data.journey && (

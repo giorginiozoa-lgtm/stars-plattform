@@ -18,6 +18,8 @@ export interface User {
   status?: 'pending' | 'active' | 'rejected';
   can_view_analytics?: boolean;
   onboarded?: boolean;
+  online?: boolean | null;       // null = Person teilt ihren Online-Status nicht
+  last_seen_at?: string | null;
 }
 
 export interface Tag {
@@ -119,6 +121,7 @@ export interface Message {
   conversation_id: number;
   sender_id: number;
   body: string;
+  delivered_at?: string | null;
   read_at: string | null;
   created_at: string;
 }
